@@ -189,6 +189,9 @@ def previewer():
                     )
                 else:
                     print(f"🙈 {color_str(folder_or_video)} is not a folder nor a video")
+        except KeyboardInterrupt as error:  # pylint: disable=broad-except
+            print("❌ Process interrupted")
+            exit(1)
         except BaseException as error:  # pylint: disable=broad-except
             print(
                 f"💥 Cannot generate preview for {color_str(folder_or_video)}: {color_str(error)}"
