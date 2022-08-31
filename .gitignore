@@ -1,0 +1,14 @@
+# Python
+__pycache__
+*.pyc
+
+# Generated
+/.coverage
+/coverage.xml
+/htmlcov/
+/dist/
+
+# IDE
+/.vscode/*
+!/.vscode/settings.json
+
