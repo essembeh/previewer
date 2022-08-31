@@ -35,7 +35,7 @@ $ previewer --help
 
 ```sh
 $ previewer --help
-usage: previewer [-h] [--version] [-P] [-T] [-L] [-B BACKGROUND] [-C COLUMNS] [-R ROWS] [-s SIZE] [-r] [-o OUTPUT] folder_or_video [folder_or_video ...]
+usage: previewer [-h] [--version] [-P] [-T] [-L] [-B BACKGROUND] [-C COLUMNS] [-R ROWS] [-s SIZE] [-r] [-o OUTPUT] [--suffix SUFFIX] folder_or_video [folder_or_video ...]
 
 extract thumbnails from video
 
@@ -57,7 +57,7 @@ optional arguments:
   -r, --recursive       list images recursively (only for images folders)
   -o OUTPUT, --output OUTPUT
                         output folder (default is current folder)
-
+  --suffix SUFFIX       preview filename suffix (default is 'preview')
 ```
 
 ```sh

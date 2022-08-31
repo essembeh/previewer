@@ -117,6 +117,11 @@ def previewer():
         help="output folder (default is current folder)",
     )
     parser.add_argument(
+        "--suffix",
+        default="preview",
+        help="preview filename suffix (default is 'preview')",
+    )
+    parser.add_argument(
         "folder_or_video",
         type=Path,
         nargs=ONE_OR_MORE,
@@ -132,7 +137,10 @@ def previewer():
     )
 
     for folder_or_video in args.folder_or_video:
-        output_jpg = args.output / f"{folder_or_video.stem}-preview.jpg"
+        output_jpg = (
+            args.output
+            / f"{folder_or_video.stem}{'-' if args.suffix else ''}{args.suffix or ''}.jpg"
+        )
         if output_jpg.exists():
             print(
                 f"💡 Preview {color_str(output_jpg)} already generated from {color_str(folder_or_video)}"
