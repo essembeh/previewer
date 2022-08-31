@@ -13,7 +13,7 @@ Install dependencies
 
 ```sh
 $ sudo apt update
-$ sudo apt install imagemagick mediainfo
+$ sudo apt install imagemagick mediainfo ffmpeg
 ```
 
 Install the latest release of _previewer_ from [PyPI](https://pypi.org/project/previewer/)

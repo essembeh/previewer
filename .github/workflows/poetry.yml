@@ -15,7 +15,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - name: Install dependencies
-        run: apt update && apt install -y imagemagick mediainfo
+        run: sudo apt update && sudo apt install -y imagemagick mediainfo ffmpeg gnome-keyring
       - name: Install poetry
         run: pip install poetry
       - name: Build app
