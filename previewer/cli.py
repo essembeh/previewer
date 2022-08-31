@@ -1,7 +1,10 @@
 """
 command line interface
 """
+
+import traceback
 from argparse import ONE_OR_MORE, ArgumentParser
+from os import getenv
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -190,3 +193,5 @@ def previewer():
             print(
                 f"💥 Cannot generate preview for {color_str(folder_or_video)}: {color_str(error)}"
             )
+            if getenv("DEBUG") == "1":
+                traceback.print_exc()
