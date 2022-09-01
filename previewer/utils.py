@@ -13,14 +13,14 @@ def is_video(file: Path) -> bool:
     """
     check if given file is a video
     """
-    return magic.from_file(str(file), mime=True).startswith("video/")
+    return magic.from_file(str(file.resolve()), mime=True).startswith("video/")
 
 
 def is_image(file: Path) -> bool:
     """
     check if given file is a video
     """
-    return magic.from_file(str(file), mime=True).startswith("image/")
+    return magic.from_file(str(file.resolve()), mime=True).startswith("image/")
 
 
 def color_str(item: Any) -> str:
@@ -36,6 +36,16 @@ def color_str(item: Any) -> str:
     if isinstance(item, BaseException):
         return f"{Fore.RED}{item}{Fore.RESET}"
     return str(item)
+
+
+def resize_image(source: Path, target: Path, size: int) -> Path:
+    """
+    create a copy of the given image with the given size
+    """
+    assert not target.exists(), f"File already exists: {target}"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    check_call([TOOLS.convert, "-resize", f"{size}x{size}^", str(source), str(target)])
+    return target
 
 
 def iter_images(folder: Path, recursive: bool = False) -> Generator[Path, None, None]:
@@ -59,8 +69,4 @@ def copy_and_resize_images(
     """
     for source_file in files:
         target_file = target / source_file.relative_to(source)
-        target_file.parent.mkdir(parents=True, exist_ok=True)
-        command = [TOOLS.convert, "-resize", f"{size}x{size}", source_file, target_file]
-        assert not target_file.exists(), f"File already exists: {target_file}"
-        check_call(list(map(str, command)))
-        yield target_file
+        yield resize_image(source_file, target_file, size)

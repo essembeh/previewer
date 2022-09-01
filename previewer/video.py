@@ -1,3 +1,4 @@
+import shlex
 from pathlib import Path
 from subprocess import check_call, check_output
 
@@ -17,7 +18,7 @@ def get_video_duration(video: Path) -> float:
 
 def extract_images(
     video: Path, folder: Path, count: int, prefix: str = "out", verbose: bool = True
-):
+) -> str:
     """
     extract n images from a video clip usong ffmpeg
     """
@@ -27,9 +28,10 @@ def extract_images(
         "-loglevel",
         "info" if verbose else "warning",
         "-i",
-        video,
+        str(video),
         "-vf",
         f"fps={fps}",
         f"{folder}/{prefix}-%3d.png",
     ]
-    check_call(list(map(str, command)))
+    check_call(command)
+    return shlex.join(command)
