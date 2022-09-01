@@ -11,6 +11,7 @@ from .tools import TOOLS
 class Montage:
     background: Optional[str] = None
     th_size: int = 256
+    th_offset: int = 10
     columns: int = 6
     polaroid: bool = False
     shadow: bool = True
@@ -20,19 +21,19 @@ class Montage:
         self,
         images: Iterable[Path],
         output: Path,
-        filename: bool = False,
+        filenames: bool = False,
         title: Optional[str] = None,
     ) -> str:
         command = [
             TOOLS.montage,
             "-geometry",
-            f"{self.th_size}x{self.th_size}^+10+10",
+            f"{self.th_size}x{self.th_size}^+{self.th_offset}+{self.th_offset}",
             "-tile",
             self.columns,
         ]
         if title is not None:
             command += ["-title", title]
-        if filename:
+        if filenames:
             command += ["-label", r"%f"]
         if self.background:
             command += ["-background", self.background]

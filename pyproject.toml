@@ -13,7 +13,7 @@ classifiers = [
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.9"
 colorama = ""
 python-magic = ""
 
@@ -27,6 +27,7 @@ rope = ""
 
 [tool.poetry.scripts]
 previewer-video-thumbnailer = 'previewer.cli:video_thumbnailer'
+previewer-folder-thumbnailer = 'previewer.cli:folder_thumbnailer'
 previewer = 'previewer.cli:previewer'
 
 [build-system]

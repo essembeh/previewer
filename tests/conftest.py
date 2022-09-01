@@ -16,7 +16,12 @@ def download(url: str, file: Path) -> Path:
 def pytest_sessionstart(session):
     session.MY_TMP = TemporaryDirectory()
 
-    if getenv("SKIP_DOWNLOAD", "0") == "0":
+    samples_dir = getenv("SAMPLES_DIR")
+    if samples_dir is not None:
+        samples_dir = Path(samples_dir)
+        session.SAMPLE_MP4 = samples_dir / "sample.mp4"
+        session.SAMPLE_GALLERY = samples_dir / "gallery"
+    else:
         session.SAMPLE_MP4 = download(
             "https://download.samplelib.com/mp4/sample-5s.mp4",
             Path(session.MY_TMP.name) / "sample.mp4",

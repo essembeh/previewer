@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 from subprocess import check_call
-from typing import Any, Generator, Iterable
+from typing import Any, Iterable, Iterator, Tuple
 
 import magic
 from colorama import Fore, Style
@@ -52,7 +52,7 @@ def resize_image(source: Path, target: Path, size: int) -> Path:
     return target
 
 
-def iter_images(folder: Path, recursive: bool = False) -> Generator[Path, None, None]:
+def iter_images(folder: Path, recursive: bool = False) -> Iterator[Path]:
     """
     list all image from given folder
     """
@@ -66,11 +66,10 @@ def iter_images(folder: Path, recursive: bool = False) -> Generator[Path, None, 
 
 
 def copy_and_resize_images(
-    source: Path, files: Iterable[Path], target: Path, size: int
-) -> Generator[Path, None, None]:
+    source_folder: Path, files: Iterable[Path], dest_folder: Path, size: int
+) -> Iterator[Tuple[Path, Path]]:
     """
     copy all image files from a folder and resize them on the fly
     """
-    for source_file in files:
-        target_file = target / source_file.relative_to(source)
-        yield resize_image(source_file, target_file, size)
+    for file in files:
+        yield file, resize_image(file, dest_folder / file.relative_to(source_folder), size)

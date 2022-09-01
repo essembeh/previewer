@@ -10,10 +10,10 @@ def test_montage(tmp_path, gallery_dir):
     assert " -tile 6 " in command
 
 
-def test_montage_filename(tmp_path, gallery_dir):
+def test_montage_filenames(tmp_path, gallery_dir):
     output = tmp_path / "output.jpg"
     montage = Montage()
-    command = montage.build(utils.iter_images(gallery_dir), output, filename=True)
+    command = montage.build(utils.iter_images(gallery_dir), output, filenames=True)
     assert output.exists()
     assert " -label " in command
 
