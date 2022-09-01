@@ -13,14 +13,18 @@ def is_video(file: Path) -> bool:
     """
     check if given file is a video
     """
-    return magic.from_file(str(file.resolve()), mime=True).startswith("video/")
+    return file.exists() and magic.from_file(str(file.resolve()), mime=True).startswith(
+        "video/"
+    )
 
 
 def is_image(file: Path) -> bool:
     """
-    check if given file is a video
+    check if given file is an image
     """
-    return magic.from_file(str(file.resolve()), mime=True).startswith("image/")
+    return file.exists() and magic.from_file(str(file.resolve()), mime=True).startswith(
+        "image/"
+    )
 
 
 def color_str(item: Any) -> str:

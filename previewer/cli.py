@@ -41,17 +41,18 @@ def video_thumbnailer():
     parser.add_argument("video", nargs=1, type=Path, help="video file")
     args = parser.parse_args()
 
-    assert 0 < args.count < 1000
-
-    args.output.mkdir(parents=True, exist_ok=True)
     video = args.video[0]
     prefix = args.prefix or video.stem
 
     print(
         f"Extract {args.count} thumbnails from {color_str(video)} to {color_str(args.output)}"
     )
-    extract_images(video, args.output, args.count, prefix=prefix, verbose=args.verbose)
-    print("🍺 Done")
+    images = extract_images(
+        video, args.output, args.count, prefix=prefix, verbose=args.verbose
+    )
+    for image in images:
+        print(f"  {color_str(image)}")
+    print(f"🍺 {len(images)} thumbnails generated")
 
 
 def previewer():
@@ -176,20 +177,20 @@ def previewer():
                     print(
                         f"🎬 Generate preview {color_str(output_jpg)} from video {color_str(folder_or_video)} ({count} thumbnails)"
                     )
-                    extract_images(
+                    images = extract_images(
                         folder_or_video,
                         tmp_folder,
                         count,
                         verbose=False,
                     )
                     montage.build(
-                        iter_images(tmp_folder),
+                        images,
                         output_jpg,
                         title=folder_or_video.name if args.title else None,
                     )
                 else:
                     print(f"🙈 {color_str(folder_or_video)} is not a folder nor a video")
-        except KeyboardInterrupt as error:  # pylint: disable=broad-except
+        except KeyboardInterrupt:  # pylint: disable=broad-except
             print("❌ Process interrupted")
             exit(1)
         except BaseException as error:  # pylint: disable=broad-except
