@@ -22,11 +22,11 @@ class Montage:
         output: Path,
         filename: bool = False,
         title: Optional[str] = None,
-    ):
+    ) -> str:
         command = [
             TOOLS.montage,
             "-geometry",
-            f"{self.th_size}x{self.th_size}+10+10",
+            f"{self.th_size}x{self.th_size}^+10+10",
             "-tile",
             self.columns,
         ]
