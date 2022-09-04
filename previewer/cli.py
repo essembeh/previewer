@@ -1,7 +1,6 @@
 """
 command line interface
 """
-
 import traceback
 from argparse import ONE_OR_MORE, ArgumentParser, BooleanOptionalAction
 from os import getenv
@@ -12,6 +11,7 @@ from colorama import Fore
 
 from . import __version__
 from .montage import Montage
+from .resolution import Resolution
 from .utils import color_str, copy_and_resize_images, is_video, iter_images
 from .video import extract_images, get_video_duration
 
@@ -25,6 +25,12 @@ def folder_thumbnailer():
         "--version", action="version", version=f"%(prog)s {__version__}"
     )
     parser.add_argument(
+        "-r",
+        "--recursive",
+        action="store_true",
+        help="list images recursively (only for images folders)",
+    )
+    parser.add_argument(
         "-o",
         "--output",
         type=Path,
@@ -34,15 +40,14 @@ def folder_thumbnailer():
     parser.add_argument(
         "-s",
         "--size",
-        type=int,
-        default=256,
-        help="thumbnails max size (default is 256)",
+        type=Resolution,
+        default=Resolution(256, 256),
+        help="thumbnails max size (default is 256x256)",
     )
     parser.add_argument(
-        "-r",
-        "--recursive",
+        "--crop",
         action="store_true",
-        help="list images recursively (only for images folders)",
+        help="crop thumbnails",
     )
     parser.add_argument("folder", nargs=1, type=Path, help="folder containing images")
     args = parser.parse_args()
@@ -58,7 +63,7 @@ def folder_thumbnailer():
             f"📷 Generate {len(images)} thumbnails from {color_str(folder)} to {color_str(args.output)}"
         )
         for image, resized_image in copy_and_resize_images(
-            folder, images, args.output, args.size
+            folder, images, args.output, args.size, crop=args.crop
         ):
             print(f"  {color_str(image)} -> {color_str(resized_image)}")
     except KeyboardInterrupt:  # pylint: disable=broad-except
@@ -176,9 +181,9 @@ def previewer():
     )
     parser.add_argument(
         "--size",
-        type=int,
-        default=256,
-        help="thumbnail size (default is 256)",
+        type=Resolution,
+        default=Resolution(256, 256),
+        help="thumbnail size (default is 256x256)",
     )
     parser.add_argument(
         "--offset",

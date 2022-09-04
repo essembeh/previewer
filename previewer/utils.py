@@ -6,6 +6,7 @@ from typing import Any, Iterable, Iterator, Tuple
 import magic
 from colorama import Fore, Style
 
+from .resolution import Resolution
 from .tools import TOOLS
 
 
@@ -42,16 +43,6 @@ def color_str(item: Any) -> str:
     return str(item)
 
 
-def resize_image(source: Path, target: Path, size: int) -> Path:
-    """
-    create a copy of the given image with the given size
-    """
-    assert not target.exists(), f"File already exists: {target}"
-    target.parent.mkdir(parents=True, exist_ok=True)
-    check_call([TOOLS.convert, "-resize", f"{size}x{size}^", str(source), str(target)])
-    return target
-
-
 def iter_images(folder: Path, recursive: bool = False) -> Iterator[Path]:
     """
     list all image from given folder
@@ -65,11 +56,33 @@ def iter_images(folder: Path, recursive: bool = False) -> Iterator[Path]:
             yield item
 
 
+def resize_image(
+    source: Path, target: Path, size: Resolution, crop: bool = False
+) -> Path:
+    """
+    create a copy of the given image with the given size
+    """
+    assert not target.exists(), f"File already exists: {target}"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    command = [TOOLS.convert, "-resize", f"{size}^"]
+    if crop:
+        command += ["-gravity", " Center", "-extent", f"{size}"]
+    command += [str(source), str(target)]
+    check_call(command)
+    return target
+
+
 def copy_and_resize_images(
-    source_folder: Path, files: Iterable[Path], dest_folder: Path, size: int
+    source_folder: Path,
+    files: Iterable[Path],
+    dest_folder: Path,
+    size: Resolution,
+    crop: bool = False,
 ) -> Iterator[Tuple[Path, Path]]:
     """
     copy all image files from a folder and resize them on the fly
     """
     for file in files:
-        yield file, resize_image(file, dest_folder / file.relative_to(source_folder), size)
+        yield file, resize_image(
+            file, dest_folder / file.relative_to(source_folder), size, crop=crop
+        )

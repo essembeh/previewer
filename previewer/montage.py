@@ -4,13 +4,14 @@ from pathlib import Path
 from subprocess import check_call
 from typing import Iterable, Optional
 
+from .resolution import Resolution
 from .tools import TOOLS
 
 
 @dataclass
 class Montage:
     background: Optional[str] = None
-    th_size: int = 256
+    th_size: Resolution = Resolution(256, 256)
     th_offset: int = 10
     columns: int = 6
     polaroid: bool = False
@@ -27,7 +28,7 @@ class Montage:
         command = [
             TOOLS.montage,
             "-geometry",
-            f"{self.th_size}x{self.th_size}^+{self.th_offset}+{self.th_offset}",
+            f"{self.th_size}^+{self.th_offset}+{self.th_offset}",
             "-tile",
             self.columns,
         ]
