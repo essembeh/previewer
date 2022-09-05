@@ -5,7 +5,13 @@
 
 # Previewer
 
-Command line tool to generated preview images from video clips or folders containing images.
+Command line tools to generate previews from video clips or folders containing images.
+
+_previewer_ is a collection of tools:
+
+- `previewer-montage`: to generate a single image with thumbnails from a _folder_ containing images or a video clip
+- `previewer-video-thumbnailer`: to extract a given number of thumbnails from a video clip
+- `previewer-folder-thumbnailer`: to generate thumbnails (resized and cropped images) from a folder containing larger images
 
 # Install
 
@@ -20,7 +26,7 @@ Install the latest release of _previewer_ from [PyPI](https://pypi.org/project/p
 
 ```sh
 $ pip3 install previewer
-$ previewer --help
+$ previewer-montage --help
 ```
 
 Or install _previewer_ from the sources
@@ -28,16 +34,16 @@ Or install _previewer_ from the sources
 ```sh
 $ pip3 install poetry
 $ pip3 install git+https://github.com/essembeh/previewer
-$ previewer --help
+$ previewer-montage --help
 ```
 
-# Usage
+# Usage: `previewer-montage`
 
 ```sh
-$ previewer --help
-usage: previewer [-h] [--version] [--verbose] [--polaroid | --no-polaroid] [--shadow | --no-shadow] [--auto_orient | --no-auto_orient] [--title | --no-title] [--filenames | --no-filenames] [-B BACKGROUND]
-                 [-C COLUMNS] [-R ROWS] [--size SIZE] [--offset OFFSET] [-r] [-o OUTPUT] [--suffix SUFFIX]
-                 folder_or_video [folder_or_video ...]
+$ previewer-montage --help
+usage: previewer-montage [-h] [--version] [--verbose] [--polaroid | --no-polaroid] [--shadow | --no-shadow] [--auto_orient | --no-auto_orient] [--title | --no-title] [--filenames | --no-filenames]
+                         [-B BACKGROUND] [-C COLUMNS] [-R ROWS] [--size SIZE] [--offset OFFSET] [-r] [-o OUTPUT] [--suffix SUFFIX]
+                         folder_or_video [folder_or_video ...]
 
 extract thumbnails from video
 
@@ -62,7 +68,7 @@ optional arguments:
   -C COLUMNS, --columns COLUMNS
                         preview columns count (default is 6)
   -R ROWS, --rows ROWS  preview rows count
-  --size SIZE           thumbnail size (default is 256)
+  --size SIZE           thumbnail size (default is 256x256)
   --offset OFFSET       thumbnail offset (default is 10)
   -r, --recursive       list images recursively (only for images folders)
   -o OUTPUT, --output OUTPUT
@@ -71,9 +77,11 @@ optional arguments:
 
 ```
 
+# Usage: `previewer-video-thumbnailer`
+
 ```sh
 $ previewer-video-thumbnailer --help
-usage: previewer-video-thumbnailer [-h] [--version] [--verbose] [-o OUTPUT] [-n COUNT] [--prefix PREFIX] video
+usage: previewer-video-thumbnailer [-h] [--version] [--verbose] [-o OUTPUT] [-n COUNT] [--size SIZE] [--crop] [--prefix PREFIX] video
 
 extract thumbnails from video
 
@@ -87,14 +95,18 @@ optional arguments:
   -o OUTPUT, --output OUTPUT
                         output folder, default is current folder
   -n COUNT, --count COUNT
-                        thumbnails count (default is 1 per second)
-  --prefix PREFIX       prefix for thumbnails
+                        thumbnails count (default is 20)
+  --size SIZE           thumbnail size
+  --crop                crop thumbnails
+  --prefix PREFIX       prefix for thumbnails (default is video filename)
 
 ```
 
+# Usage: `previewer-folder-thumbnailer`
+
 ```sh
 $ previewer-folder-thumbnailer --help
-usage: previewer-folder-thumbnailer [-h] [--version] [-o OUTPUT] [-s SIZE] [-r] folder
+usage: previewer-folder-thumbnailer [-h] [--version] [-r] [-o OUTPUT] [-s SIZE] [--crop] folder
 
 extract thumbnails from folder
 
@@ -104,9 +116,10 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   --version             show program's version number and exit
+  -r, --recursive       list images recursively (only for images folders)
   -o OUTPUT, --output OUTPUT
                         output folder, default is current folder
-  -s SIZE, --size SIZE  thumbnails max size (default is 256)
-  -r, --recursive       list images recursively (only for images folders)
+  -s SIZE, --size SIZE  thumbnails max size (default is 256x256)
+  --crop                crop thumbnails
 
 ```
