@@ -19,6 +19,7 @@ class Montage:
     shadow: bool = True
     th_offset: int = 0
     th_size: Optional[Resolution] = None
+    font: Optional[str] = None
 
     def build(
         self,
@@ -56,6 +57,8 @@ class Montage:
             command.append("+polaroid")
         if self.shadow:
             command += ["-shadow"]
+        if self.font is not None:
+            command += ["-font", self.font]
         command += images
         command.append(output_jpg)
 

@@ -68,6 +68,11 @@ def configure(parser: ArgumentParser):
         help="add filenames under thumbnails (ignored for videos)",
     )
     parser.add_argument(
+        "--font",
+        type=str,
+        help="font used for labels, use 'convert -list font' to list available fonts",
+    )
+    parser.add_argument(
         "-B",
         "--background",
         help="montage background color, list of colors: https://imagemagick.org/script/color.php",
@@ -123,6 +128,7 @@ def run(args: Namespace):
         columns=args.columns,
         th_size=args.size,
         th_offset=args.offset,
+        font=args.font,
     )
     if args.polaroid is not None:
         montage.polaroid = args.polaroid
