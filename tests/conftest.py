@@ -51,5 +51,15 @@ def sample_mp4(request) -> Path:
 
 
 @fixture
+def sample1_jpg(request) -> Path:
+    return request.session.SAMPLE_GALLERY / "01.jpg"
+
+
+@fixture
+def sample2_jpg(request) -> Path:
+    return request.session.SAMPLE_GALLERY / "02.jpg"
+
+
+@fixture
 def gallery_dir(request) -> Path:
     return request.session.SAMPLE_GALLERY

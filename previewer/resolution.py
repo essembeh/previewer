@@ -1,10 +1,23 @@
+from pathlib import Path
 from re import fullmatch
+from typing import Tuple
+
+from wand.image import Image
 
 _PATTERN = r"(?P<width>[0-9]+)(x(?P<height>[0-9]+))?"
 
 
 class Resolution:
     __slots__ = ("width", "height")
+
+    @classmethod
+    def from_image(cls, image: Path):
+        with Image(filename=image) as img:
+            return cls(img.width, img.height)
+
+    @classmethod
+    def from_img(cls, img: Image):
+        return cls(img.width, img.height)
 
     def __init__(self, *args):
         """
@@ -42,6 +55,10 @@ class Resolution:
     @property
     def y(self):
         return self.height
+
+    @property
+    def size(self) -> Tuple[int, int]:
+        return (self.width, self.height)
 
     def __str__(self):
         return f"{self.width}x{self.height}"

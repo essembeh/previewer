@@ -1,17 +1,14 @@
 """
 command line interface
 """
-# pylint: disable=logging-fstring-interpolation
-
 from argparse import ONE_OR_MORE, ArgumentParser, BooleanOptionalAction, Namespace
-from datetime import timedelta
+from operator import itemgetter
 from pathlib import Path
-from tempfile import TemporaryDirectory
 
-from ..imagemagick import Montage
 from ..resolution import Resolution
-from ..utils import auto_resize_image, color_str, is_video, iter_images_in_folder
+from ..utils import color_str, is_video, iter_images_in_folder, iter_img
 from ..video import iter_video_frames
+from ..wand import auto_resize_img, montage
 
 
 def configure(parser: ArgumentParser):
@@ -118,19 +115,6 @@ def configure(parser: ArgumentParser):
 
 
 def run(args: Namespace):
-    montage = Montage(
-        background=args.background,
-        columns=args.columns,
-        th_size=args.size,
-        th_offset=args.offset,
-    )
-    if args.polaroid is not None:
-        montage.polaroid = args.polaroid
-    if args.shadow is not None:
-        montage.shadow = args.shadow
-    if args.auto_orient is not None:
-        montage.auto_orient = args.auto_orient
-
     for folder_or_video in args.input_files:
         output_jpg = (
             (args.output or Path())
@@ -142,61 +126,53 @@ def run(args: Namespace):
             )
             continue
 
-        with TemporaryDirectory() as tmp:
-            tmp_folder = Path(tmp)
-            if folder_or_video.is_dir():
-                run_folder(args, montage, folder_or_video, output_jpg, tmp_folder)
-            elif is_video(folder_or_video):
-                run_video(args, montage, folder_or_video, output_jpg, tmp_folder)
-            else:
-                print(f"🙈 {color_str(folder_or_video)} is not a folder nor a video")
+        if folder_or_video.is_dir():
+            run_folder(args, folder_or_video, output_jpg)
+        elif is_video(folder_or_video):
+            run_video(args, folder_or_video, output_jpg)
+        else:
+            print(f"🙈 {color_str(folder_or_video)} is not a folder nor a video")
 
 
-def run_folder(
-    args: Namespace, montage: Montage, folder: Path, output_jpg: Path, tmp_folder: Path
-):
+def run_folder(args: Namespace, folder: Path, output_jpg: Path):
     count = len(list(iter_images_in_folder(folder, recursive=args.recursive)))
     assert count > 0, "Folder does not contain any image"
     print(
         f"📷 Generate montage from folder {color_str(folder)} containing {count} images"
     )
-    montage.build(
+    montage(
         (
-            auto_resize_image(
-                image,
-                tmp_folder / image.name,
+            auto_resize_img(
+                img,
                 resolution=args.size,
                 crop=args.crop,
                 fill=args.fill,
             )
-            for image in iter_images_in_folder(folder, recursive=args.recursive)
+            for img in iter_img(iter_images_in_folder(folder, recursive=args.recursive))
         ),
         output_jpg,
-        filenames=args.filenames,
-        title=folder.name if args.title else None,
+        columns=args.columns,
     )
     print(f"🍺 Montage generated {color_str(output_jpg)}")
 
 
-def run_video(
-    args: Namespace, montage: Montage, video: Path, output_jpg: Path, tmp_folder: Path
-):
+def run_video(args: Namespace, video: Path, output_jpg: Path):
     rows = args.rows or args.columns
     count = args.columns * rows
     print(f"🎬 Generate montage from video {color_str(video)} using {count} thumbnails")
-    montage.build(
+    montage(
         (
-            auto_resize_image(
-                frame,
-                tmp_folder / f"{timedelta(seconds=position)}.jpg",
+            auto_resize_img(
+                img,
                 resolution=args.size,
                 crop=args.crop,
                 fill=args.fill,
             )
-            for frame, position in iter_video_frames(video, count)
+            for img in iter_img(
+                map(itemgetter(0), iter_video_frames(video, count=args.count))
+            )
         ),
         output_jpg,
-        filenames=args.filenames,
-        title=video.name if args.title else None,
+        columns=args.columns,
     )
     print(f"🍺 Montage generated {color_str(output_jpg)}")

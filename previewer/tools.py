@@ -18,16 +18,12 @@ class _Tools:
         return binary
 
     @cached_property
+    def ffprobe(self) -> str:
+        return self.__find_binary("ffprobe", arg_version="-version")
+
+    @cached_property
     def ffmpeg(self) -> str:
         return self.__find_binary("ffmpeg", arg_version="-version")
-
-    @cached_property
-    def mediainfo(self) -> str:
-        return self.__find_binary("mediainfo")
-
-    @cached_property
-    def magick(self) -> str:
-        return self.__find_binary("magick")
 
     @cached_property
     def montage(self) -> str:

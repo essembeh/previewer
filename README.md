@@ -9,9 +9,10 @@ Command line tools to generate previews from video clips or folders containing i
 
 _previewer_ is a collection of tools:
 
-- `previewer-montage`: to generate a single image with thumbnails from a _folder_ containing images or a video clip
-- `previewer-video-thumbnailer`: to extract a given number of thumbnails from a video clip
-- `previewer-folder-thumbnailer`: to generate thumbnails (resized and cropped images) from a folder containing larger images
+- `previewer montage`: to generate a single image with thumbnails from a _folder_ containing images or a video clip
+- `previewer gif`: to generate a Gif with thumbnails from a _folder_ containing images or a video clip
+- `previewer video-thumbnailer`: to extract a given number of thumbnails from a video clip
+- `previewer folder-thumbnailer`: to generate thumbnails (resized and cropped images) from a folder containing larger images
 
 # Install
 
@@ -19,7 +20,7 @@ Install dependencies
 
 ```sh
 $ sudo apt update
-$ sudo apt install imagemagick mediainfo ffmpeg
+$ sudo apt install imagemagick ffmpeg
 ```
 
 Install the latest release of _previewer_ from [PyPI](https://pypi.org/project/previewer/)
@@ -34,26 +35,29 @@ Or install _previewer_ from the sources
 ```sh
 $ pip3 install poetry
 $ pip3 install git+https://github.com/essembeh/previewer
-$ previewer-montage --help
+$ previewer --help
 ```
 
-# Usage: `previewer-montage`
+# Usage: `previewer montage`
 
 ```sh
-$ previewer-montage --help
-usage: previewer-montage [-h] [--version] [--verbose] [--polaroid | --no-polaroid] [--shadow | --no-shadow] [--auto_orient | --no-auto_orient] [--title | --no-title] [--filenames | --no-filenames]
-                         [-B BACKGROUND] [-C COLUMNS] [-R ROWS] [--size SIZE] [--offset OFFSET] [-r] [-o OUTPUT] [--suffix SUFFIX]
-                         folder_or_video [folder_or_video ...]
-
-extract thumbnails from video
+$ previewer montage --help
+usage: previewer montage [-h] [-r] [-o OUTPUT] [-P PREFIX] [-S SUFFIX] [--polaroid | --no-polaroid] [--shadow | --no-shadow] [--auto_orient | --no-auto_orient] [--title | --no-title]
+                         [--filenames | --no-filenames] [-B BACKGROUND] [-C COLUMNS] [-R ROWS] [--size SIZE] [--crop | --no-crop] [--fill | --no-fill] [--offset OFFSET]
+                         input_files [input_files ...]
 
 positional arguments:
-  folder_or_video       folder containing images or video file
+  input_files           folders containing images or video files
 
 optional arguments:
   -h, --help            show this help message and exit
-  --version             show program's version number and exit
-  --verbose             print more information
+  -r, --recursive       list images recursively (only for images folders)
+  -o OUTPUT, --output OUTPUT
+                        output folder (default is current folder)
+  -P PREFIX, --prefix PREFIX
+                        generated filename prefix
+  -S SUFFIX, --suffix SUFFIX
+                        generated filename prefix
   --polaroid, --no-polaroid
                         use polaroid style
   --shadow, --no-shadow
@@ -69,57 +73,76 @@ optional arguments:
                         preview columns count (default is 6)
   -R ROWS, --rows ROWS  preview rows count
   --size SIZE           thumbnail size (default is 256x256)
+  --crop, --no-crop     crop thumbnails (default: False)
+  --fill, --no-fill     fill thumbnails (default: False)
   --offset OFFSET       thumbnail offset (default is 10)
+```
+
+# Usage: `previewer gif`
+
+```sh
+$ previewer gif --help               
+usage: previewer gif [-h] [-r] [-o OUTPUT] [-P PREFIX] [-S SUFFIX] [--delay DELAY | --fps DELAY] [-n COUNT | --speed SPEED] [--colors COLORS] [--size SIZE] [--crop | --no-crop] [--fill | --no-fill]
+                     input_files [input_files ...]
+
+positional arguments:
+  input_files           folders containing images or video files
+
+optional arguments:
+  -h, --help            show this help message and exit
   -r, --recursive       list images recursively (only for images folders)
   -o OUTPUT, --output OUTPUT
                         output folder (default is current folder)
-  --suffix SUFFIX       preview filename suffix (default is ' preview')
-
+  -P PREFIX, --prefix PREFIX
+                        generated filename prefix
+  -S SUFFIX, --suffix SUFFIX
+                        generated filename prefix
+  --delay DELAY         delay for frames in ms, default is 500
+  --fps DELAY           frame per second, default is 2
+  -n COUNT, --count COUNT
+                        thumbnails count for videos (default calculated given --delay/--fps)
+  --speed SPEED         calculate frames count to extract to respect given speed (only for videos)
+  --colors COLORS       gif colors
+  --size SIZE           thumbnail size (default is 640x480)
+  --crop, --no-crop     crop thumbnails (default: False)
+  --fill, --no-fill     fill thumbnails (default: False)
 ```
 
-# Usage: `previewer-video-thumbnailer`
+# Usage: `previewer video-thumbnailer`
 
 ```sh
-$ previewer-video-thumbnailer --help
-usage: previewer-video-thumbnailer [-h] [--version] [--verbose] [-o OUTPUT] [-n COUNT] [--size SIZE] [--crop] [--prefix PREFIX] video
-
-extract thumbnails from video
+$ previewer video-thumbnailer --help
+usage: previewer video-thumbnailer [-h] [-o OUTPUT] [-n COUNT] [--size SIZE] [--crop | --no-crop] [--fill | --no-fill] videos [videos ...]
 
 positional arguments:
-  video                 video file
+  videos                video file
 
 optional arguments:
   -h, --help            show this help message and exit
-  --version             show program's version number and exit
-  --verbose             print more information
   -o OUTPUT, --output OUTPUT
-                        output folder, default is current folder
+                        output folder (default is a new folder in current directory)
   -n COUNT, --count COUNT
                         thumbnails count (default is 20)
   --size SIZE           thumbnail size
-  --crop                crop thumbnails
-  --prefix PREFIX       prefix for thumbnails (default is video filename)
-
+  --crop, --no-crop     crop thumbnails (default is False) (default: False)
+  --fill, --no-fill     fill thumbnails (defailt is False) (default: False)
 ```
 
-# Usage: `previewer-folder-thumbnailer`
+# Usage: `previewer folder-thumbnailer`
 
 ```sh
-$ previewer-folder-thumbnailer --help
-usage: previewer-folder-thumbnailer [-h] [--version] [-r] [-o OUTPUT] [-s SIZE] [--crop] folder
-
-extract thumbnails from folder
+$ previewer folder-thumbnailer --help
+usage: previewer folder-thumbnailer [-h] [-o OUTPUT] [-r] --size SIZE [--crop | --no-crop] [--fill | --no-fill] folders [folders ...]
 
 positional arguments:
-  folder                folder containing images
+  folders               folders containging images
 
 optional arguments:
   -h, --help            show this help message and exit
-  --version             show program's version number and exit
-  -r, --recursive       list images recursively (only for images folders)
   -o OUTPUT, --output OUTPUT
-                        output folder, default is current folder
-  -s SIZE, --size SIZE  thumbnails max size (default is 256x256)
-  --crop                crop thumbnails
-
+                        output folder (default is a new folder in current directory)
+  -r, --recursive       list images recursively (only for images folders)
+  --size SIZE           thumbnail size
+  --crop, --no-crop     crop thumbnails (default is False) (default: False)
+  --fill, --no-fill     fill thumbnails (defailt is False) (default: False)
 ```

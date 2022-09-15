@@ -1,31 +1,58 @@
+import shutil
 import sys
+from collections.abc import Iterable
 from pathlib import Path
-from subprocess import check_call
-from typing import Any, Iterable, Iterator, Tuple
+from typing import Any, Iterator, Tuple
 
 import magic
 from colorama import Fore, Style
 
+from wand.image import Image
+
 from .resolution import Resolution
-from .tools import TOOLS
+from .wand import auto_resize_img
+
+
+def get_mime(file: Path) -> str:
+    """
+    Return the mime of a file
+    """
+    if not file.exists():
+        raise FileNotFoundError(f"Cannot find file: {file}")
+    return magic.from_file(str(file.resolve()), mime=True)
 
 
 def is_video(file: Path) -> bool:
     """
     check if given file is a video
     """
-    return file.exists() and magic.from_file(str(file.resolve()), mime=True).startswith(
-        "video/"
-    )
+    return file.exists() and get_mime(file).startswith("video/")
+
+
+def check_video(file: Path) -> Path:
+    assert is_video(file), f"{file} is not a valid video file"
+    return file
 
 
 def is_image(file: Path) -> bool:
     """
     check if given file is an image
     """
-    return file.exists() and magic.from_file(str(file.resolve()), mime=True).startswith(
-        "image/"
-    )
+    return file.exists() and get_mime(file).startswith("image/")
+
+
+def check_image(file: Path) -> Path:
+    assert is_image(file), f"{file} is not a valid image"
+    return file
+
+
+def check_empty_folder(folder: Path):
+    if folder.exists():
+        assert folder.is_dir(), f"Invalid folder {folder}"
+        assert next(folder.iterdir(), None) is None, f"Folder {folder} is not empty"
+    else:
+        folder.mkdir(parents=True)
+    return folder
 
 
 def color_str(item: Any) -> str:
@@ -43,7 +70,7 @@ def color_str(item: Any) -> str:
     return str(item)
 
 
-def iter_images(folder: Path, recursive: bool = False) -> Iterator[Path]:
+def iter_images_in_folder(folder: Path, recursive: bool = False) -> Iterator[Path]:
     """
     list all image from given folder
     """
@@ -51,38 +78,63 @@ def iter_images(folder: Path, recursive: bool = False) -> Iterator[Path]:
     for item in sorted(folder.iterdir()):
         if item.is_dir():
             if recursive:
-                yield from iter_images(item, recursive=True)
+                yield from iter_images_in_folder(item, recursive=True)
         elif is_image(item):
             yield item
 
 
-def resize_image(
-    source: Path, target: Path, size: Resolution, crop: bool = False
+def auto_resize_image(
+    source: Path,
+    destination: Path,
+    resolution: Resolution,
+    crop: bool,
+    fill: bool,
 ) -> Path:
     """
-    create a copy of the given image with the given size
+    resize the given image
     """
-    assert not target.exists(), f"File already exists: {target}"
-    target.parent.mkdir(parents=True, exist_ok=True)
-    command = [TOOLS.convert, "-resize", f"{size}^"]
-    if crop:
-        command += ["-gravity", " Center", "-extent", f"{size}"]
-    command += [str(source), str(target)]
-    check_call(command)
-    return target
+    if resolution is not None:
+        with Image(filename=source) as img:
+            if resolution.size != img.size:
+                return save_img(
+                    auto_resize_img(img, resolution, crop=crop, fill=fill), destination
+                )
+    # fallback copy, image
+    return shutil.copy2(source, destination)
 
 
-def copy_and_resize_images(
+def iter_img(images: Iterable[Path]) -> Iterator[Image]:
+    for image in images:
+        with Image(filename=image) as img:
+            yield img
+
+
+def save_img(
+    image: Image, dest: Path, overwrite: bool = False, mkdirs: bool = True
+) -> Path:
+    """
+    Save an image with checks for overwrite and parent folder creation
+    """
+    if dest.exists():
+        if not overwrite:
+            raise FileExistsError(f"{dest} already exists")
+    if mkdirs:
+        dest.parent.mkdir(parents=True, exist_ok=True)
+    image.save(filename=dest)
+    return dest
+
+
+def iter_copy_tree(
     source_folder: Path,
-    files: Iterable[Path],
-    dest_folder: Path,
-    size: Resolution,
-    crop: bool = False,
+    destination_folder: Path,
+    recursive: bool = False,
+    mkdirs: bool = False,
 ) -> Iterator[Tuple[Path, Path]]:
     """
-    copy all image files from a folder and resize them on the fly
+    iterator to copy folder recursively
     """
-    for file in files:
-        yield file, resize_image(
-            file, dest_folder / file.relative_to(source_folder), size, crop=crop
-        )
+    for source_file in iter_images_in_folder(source_folder, recursive=recursive):
+        destination_file = destination_folder / source_file.relative_to(source_folder)
+        if mkdirs:
+            destination_file.parent.mkdir(parents=True, exist_ok=True)
+        yield source_file, destination_file

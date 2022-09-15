@@ -1,58 +1,83 @@
+from datetime import timedelta
 from math import floor, log
 from pathlib import Path
-from subprocess import check_call, check_output
-from typing import List
+from subprocess import DEVNULL, check_call, check_output
+from tempfile import TemporaryDirectory
+from typing import Iterator, Tuple
 
+from .logger import DEBUG
 from .tools import TOOLS
-from .utils import is_image
+from .utils import check_image
 
 
 def get_video_duration(video: Path) -> float:
     """
-    use mediainfo to get the video duration as float
+    use ffprobe to get the video duration as float
     """
-    command = [TOOLS.mediainfo, "--Inform=General;%Duration%", video]
-    text = check_output(list(map(str, command)))
-    duration_ms = float(text)
-    assert duration_ms > 0
-    return duration_ms / 1000
+    text = check_output(
+        [
+            TOOLS.ffprobe,
+            "-i",
+            str(video),
+            "-v",
+            "quiet",
+            "-show_entries",
+            "format=duration",
+            "-hide_banner",
+            "-of",
+            "default=noprint_wrappers=1:nokey=1",
+        ]
+    )
+    return float(text)
 
 
-def extract_images(
-    video: Path, folder: Path, count: int, prefix: str = "out", verbose: bool = True
-) -> List[Path]:
+def iter_video_frames(
+    video: Path,
+    count: int,
+    extension: str = "jpg",
+) -> Iterator[Tuple[Path, float]]:
     """
-    extract n images from a video clip usong ffmpeg
+    Iterate over given number of frames from a video
     """
-    assert 0 < count < 1000, "thumbnail count must be in [1-999]"
-    # compute generated filenames
+    duration = get_video_duration(video)
+    delta = duration / (count + 1)
     digits = floor(log(count, 10)) + 1
-    generated_files = [
-        folder / f"{prefix}-{i:0{digits}}.png" for i in range(1, count + 1)
-    ]
-    # check that none of generated file exists
-    for generated_file in generated_files:
-        if generated_file.exists():
-            raise IOError(f"File {generated_file} already exists")
-    # build the command
-    fps = count / get_video_duration(video)
+
+    with TemporaryDirectory() as tmp:
+        folder = Path(tmp)
+        for index in range(1, count + 1):
+            seconds = index * delta
+            DEBUG(
+                "extract frame %d/%d at position %s",
+                index,
+                count,
+                timedelta(seconds=seconds),
+            )
+            yield extract_frame(
+                video,
+                folder / f"{index:0{digits}}.{extension}",
+                seconds=seconds,
+            ), seconds
+
+
+def extract_frame(video: Path, output: Path, seconds: float) -> Path:
+    """
+    Extract a single frame from a video
+    """
+    if output.exists():
+        raise FileExistsError(f"File already exists: {output}")
+    # prepare command
     command = [
         TOOLS.ffmpeg,
-        "-loglevel",
-        "info" if verbose else "warning",
+        "-ss",
+        f"{seconds}",
         "-i",
         str(video),
-        "-vf",
-        f"fps={fps}",
-        f"{folder}/{prefix}-%{digits}d.png",
+        "-frames:v",
+        "1",
+        str(output),
     ]
-    # create folder if needed
-    folder.mkdir(parents=True, exist_ok=True)
     # run command
-    check_call(command)
-    # check generated files
-    for generated_file in generated_files:
-        if not is_image(generated_file):
-            raise ValueError(f"Invalid generated thumbnail: {generated_file}")
+    check_call(command, stdout=DEVNULL, stderr=DEVNULL)
 
-    return generated_files
+    return check_image(output)

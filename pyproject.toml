@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "previewer"
-version = "0.1.0"
+version = "0.2.0"
 description = "Video or Folder preview generator"
 homepage = "https://github.com/essembeh/previewer"
 authors = ["Sébastien MB <seb@essembeh.org>"]
@@ -14,8 +14,9 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-colorama = ""
-python-magic = ""
+Wand = "^0.6.10"
+colorama = "^0.4.5"
+python-magic = "^0.4.27"
 
 [tool.poetry.dev-dependencies]
 black = ""
@@ -26,9 +27,7 @@ pytest-cov = ""
 rope = ""
 
 [tool.poetry.scripts]
-previewer-video-thumbnailer = 'previewer.commands.video_thumbnailer:run'
-previewer-folder-thumbnailer = 'previewer.commands.folder_thumbnailer:run'
-previewer-montage = 'previewer.commands.montage:run'
+previewer = 'previewer.cli:run'
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
