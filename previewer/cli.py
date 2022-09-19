@@ -5,7 +5,7 @@ command line interface
 from argparse import ArgumentParser
 
 from . import __version__
-from .commands import folder_thumbnailer, gif, montage, montage2, video_thumbnailer
+from .commands import gif, montage, montage2, resize, video_thumbnailer
 from .logger import logger, logging
 from .utils import color_str
 
@@ -46,28 +46,28 @@ def run():
             help="extract thumbnails from video clips",
         )
     )
-    folder_thumbnailer(
-        subparsers.add_parser(
-            "folder-thumbnailer",
-            aliases=["ft"],
-            help="extract thumbnails from folders containing images",
-        )
-    )
     montage(
         subparsers.add_parser(
             "montage",
             help="build an image with thumbnails from a video clip or a folder",
         )
     )
-    montage2(
-        subparsers.add_parser(
-            "montage2", help="work-in-progress replacement of montage subcommand"
-        )
-    )
     gif(
         subparsers.add_parser(
             "gif",
             help="build a gif with thumbnails from a video clip or a folder",
+        )
+    )
+    resize(
+        subparsers.add_parser(
+            "resize",
+            help="resize given images",
+        )
+    )
+    ## WIP commands
+    montage2(
+        subparsers.add_parser(
+            "montage2", help="work-in-progress replacement of montage subcommand"
         )
     )
 
