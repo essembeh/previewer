@@ -41,6 +41,13 @@ def configure(parser: ArgumentParser):
         type=str,
         help="generated filename prefix",
     )
+    parser.add_argument(
+        "--format",
+        dest="extension",
+        choices=["gif", "webm", "webp", "mp4"],
+        default="gif",
+        help="generated file format, default is gif",
+    )
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
         "--delay",
@@ -100,29 +107,31 @@ def configure(parser: ArgumentParser):
 
 def run(args: Namespace):
     for folder_or_video in args.input_files:
-        output_gif = (
+        output_file = (
             (args.output or Path())
-            / f"{args.prefix or ''}{folder_or_video.name if folder_or_video.is_dir() else folder_or_video.stem}{args.suffix or ''}.gif"
+            / f"{args.prefix or ''}{folder_or_video.name if folder_or_video.is_dir() else folder_or_video.stem}{args.suffix or ''}.{args.extension}"
         )
-        if output_gif.exists():
+        if output_file.exists():
             print(
-                f"💡 Gif {color_str(output_gif)} already generated from {color_str(folder_or_video)}"
+                f"💡 Sequence {color_str(output_file)} already generated from {color_str(folder_or_video)}"
             )
             continue
 
         if folder_or_video.is_dir():
-            run_folder(args, folder_or_video, output_gif)
+            run_folder(args, folder_or_video, output_file)
         elif is_video(folder_or_video):
-            run_video(args, folder_or_video, output_gif)
+            run_video(args, folder_or_video, output_file)
         else:
             print(f"🙈 {color_str(folder_or_video)} is not a folder nor a video")
 
 
-def run_folder(args: Namespace, folder: Path, output_gif: Path):
+def run_folder(args: Namespace, folder: Path, output_file: Path):
     count = len(list(iter_images_in_folder(folder, recursive=args.recursive)))
     assert count > 0, "Folder does not contain any image"
 
-    print(f"📷 Generate Gif from folder {color_str(folder)} containing {count} images")
+    print(
+        f"📷 Generate {args.extension} from folder {color_str(folder)} containing {count} images"
+    )
     create_gif(
         (
             auto_resize_img(
@@ -133,13 +142,13 @@ def run_folder(args: Namespace, folder: Path, output_gif: Path):
             )
             for img in iter_img(iter_images_in_folder(folder, recursive=args.recursive))
         ),
-        output_gif,
+        output_file,
         delay=args.delay,
     )
-    print(f"🍺 Gif generated {output_gif}")
+    print(f"🍺 Sequence generated {output_file}")
 
 
-def run_video(args: Namespace, video: Path, output_gif: Path):
+def run_video(args: Namespace, video: Path, output_file: Path):
     # compute frame count if needed
     count = args.count
     if count is None:
@@ -154,7 +163,9 @@ def run_video(args: Namespace, video: Path, output_gif: Path):
             timedelta(milliseconds=count * args.delay * 10),
         )
 
-    print(f"🎬 Generate Gif from video {color_str(video)} using {count} thumbnails")
+    print(
+        f"🎬 Generate {args.extension} from video {color_str(video)} using {count} thumbnails"
+    )
     create_gif(
         (
             auto_resize_img(
@@ -165,7 +176,7 @@ def run_video(args: Namespace, video: Path, output_gif: Path):
             )
             for img in iter_img(map(itemgetter(0), iter_video_frames(video, count)))
         ),
-        output_gif,
+        output_file,
         delay=args.delay,
     )
-    print(f"🍺 Gif generated {output_gif}")
+    print(f"🍺 Sequence generated {output_file}")
