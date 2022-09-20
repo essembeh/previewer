@@ -1,3 +1,4 @@
+import random
 from pathlib import Path
 from typing import Iterable, Tuple
 
@@ -125,7 +126,10 @@ def montage(
 
 
 def create_gif(
-    frames: Iterable[Image], output_gif: Path, delay: int = 50, optimize: bool = True
+    frames: Iterable[Image],
+    output_gif: Path,
+    delay: int = 50,
+    optimize: bool = True,
 ):
     """
     Create a gif with the given images

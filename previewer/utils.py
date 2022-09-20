@@ -1,3 +1,4 @@
+import random
 import shutil
 import sys
 from collections.abc import Iterable
@@ -70,12 +71,19 @@ def color_str(item: Any) -> str:
     return str(item)
 
 
-def iter_images_in_folder(folder: Path, recursive: bool = False) -> Iterator[Path]:
+def iter_images_in_folder(
+    folder: Path, recursive: bool = False, shuffle: bool = False
+) -> Iterator[Path]:
     """
     list all image from given folder
     """
     assert folder.is_dir()
-    for item in sorted(folder.iterdir()):
+    items = list(folder.iterdir())
+    if shuffle:
+        random.shuffle(items)
+    else:
+        items = sorted(items)
+    for item in items:
         if item.is_dir():
             if recursive:
                 yield from iter_images_in_folder(item, recursive=True)

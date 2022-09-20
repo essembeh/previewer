@@ -18,6 +18,11 @@ def configure(parser: ArgumentParser):
     parser.set_defaults(handler=run)
 
     parser.add_argument(
+        "--shuffle",
+        action="store_true",
+        help="shuffle image order, default is alphabetical order (only for images folders)",
+    )
+    parser.add_argument(
         "-r",
         "--recursive",
         action="store_true",
@@ -140,7 +145,11 @@ def run_folder(args: Namespace, folder: Path, output_file: Path):
                 crop=args.crop,
                 fill=args.fill,
             )
-            for img in iter_img(iter_images_in_folder(folder, recursive=args.recursive))
+            for img in iter_img(
+                iter_images_in_folder(
+                    folder, recursive=args.recursive, shuffle=args.shuffle
+                )
+            )
         ),
         output_file,
         delay=args.delay,
