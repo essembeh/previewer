@@ -154,7 +154,7 @@ def run_folder(args: Namespace, folder: Path, output_file: Path):
         output_file,
         delay=args.delay,
     )
-    print(f"🍺 Sequence generated {output_file}")
+    print(f"🍺 Sequence generated {color_str(output_file)}")
 
 
 def run_video(args: Namespace, video: Path, output_file: Path):
@@ -188,4 +188,4 @@ def run_video(args: Namespace, video: Path, output_file: Path):
         output_file,
         delay=args.delay,
     )
-    print(f"🍺 Sequence generated {output_file}")
+    print(f"🍺 Sequence generated {color_str(output_file)}")
