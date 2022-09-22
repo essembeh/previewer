@@ -1,11 +1,30 @@
-import random
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, Tuple
+from typing import Iterable
 
 from wand.image import Image
 
 from .logger import DEBUG
 from .resolution import Resolution
+
+
+@dataclass
+class BlurGenerator:
+    blur_sigma: float
+    black: float
+    white: float
+    gamma: float
+
+    def apply(self, image: Image) -> Image:
+        if self.blur_sigma > 0:
+            image.gaussian_blur(sigma=self.blur_sigma)
+        image.level(black=self.black, white=self.white, gamma=self.gamma)
+
+    def __str__(self):
+        return f"blur:{self.blur_sigma}:{self.black}:{self.white}:{self.gamma}"
+
+
+DEFAULT_BLUR = BlurGenerator(30, 0, 1, 0.7)
 
 
 def auto_resize_img(
@@ -71,8 +90,7 @@ def crop_fill(image: Image, resolution: Resolution) -> Image:
 def crop_fit(
     image: Image,
     resolution: Resolution,
-    bg_blur: float = 20,
-    bg_level: Tuple[float, float] = (0, 1),
+    blur: BlurGenerator = DEFAULT_BLUR,
     bg_keep_ratio: bool = False,
 ):
     """
@@ -89,8 +107,7 @@ def crop_fit(
             resize=f"{resolution.width}x{resolution.height}{'^' if bg_keep_ratio else '!'}",
         )
         image.crop(width=resolution.width, height=resolution.height, gravity="center")
-        image.gaussian_blur(sigma=bg_blur)
-        image.level(*bg_level)
+        blur.apply(image)
 
         image.composite(
             thumbnail,
