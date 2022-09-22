@@ -9,7 +9,7 @@ def test_get_video_duration(sample_mp4):
 
 def test_extract_images(sample_mp4):
     count = 0
-    last_position = 0
+    last_position = -1
     for frame, seconds in video.iter_video_frames(sample_mp4, 3):
         count += 1
         assert last_position < seconds

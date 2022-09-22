@@ -1,3 +1,7 @@
+"""
+Video related utility functions
+"""
+import time
 from datetime import timedelta
 from math import floor, log
 from pathlib import Path
@@ -73,15 +77,12 @@ def iter_video_frames(
     Iterate over given number of frames from a video
     """
     duration = get_video_duration(video)
-
-    if start is None:
-        start = (duration / count) / 2
-    if end is None:
-        end = duration - (duration / count) / 2
+    start = 0 if start is None else start
+    end = int(duration) if end is None else end
 
     assert (
         0 <= start < end <= duration
-    ), f"Invalid start/end position, must be [0-{duration:.3f}]"
+    ), f"Invalid start ({start}) or end ({end}) position, must be [0-{duration:.3f}]"
 
     step = 0 if count == 1 else (end - start) / (count - 1)
     digits = floor(log(count, 10)) + 1
@@ -121,6 +122,8 @@ def extract_frame(video: Path, output: Path, seconds: float) -> Path:
         str(output),
     ]
     # run command
+    start = time.time()
     check_call(command, stdout=DEVNULL, stderr=DEVNULL)
+    DEBUG("Frame %s extracted in %.3lf sec", output, time.time() - start)
 
     return check_image(output)

@@ -29,9 +29,5 @@ class _Tools:
     def montage(self) -> str:
         return self.__find_binary("montage")
 
-    @cached_property
-    def convert(self) -> str:
-        return self.__find_binary("convert")
-
 
 TOOLS = _Tools()

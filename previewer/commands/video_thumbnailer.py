@@ -4,7 +4,7 @@ from pathlib import Path
 
 from ..resolution import Resolution
 from ..utils import auto_resize_image, check_empty_folder, check_video, color_str
-from ..video import iter_video_frames, position_to_seconds
+from ..video import get_video_duration, iter_video_frames, position_to_seconds
 
 
 def configure(parser: ArgumentParser):
@@ -28,7 +28,13 @@ def configure(parser: ArgumentParser):
         type=Path,
         help="output folder (default is a new folder in current directory)",
     )
-    parser.add_argument(
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
+        "--fps",
+        type=int,
+        help="frames per second",
+    )
+    group.add_argument(
         "-n",
         "--count",
         type=int,
@@ -38,12 +44,14 @@ def configure(parser: ArgumentParser):
     parser.add_argument(
         "--start",
         type=position_to_seconds,
-        help="start position (1234.123 or 1:23:45.123 format)",
+        metavar="SECONDS.MILLISECONDS",
+        help="start position",
     )
     parser.add_argument(
         "--end",
         type=position_to_seconds,
-        help="end position (1234.123 or 1:23:45.123 format)",
+        metavar="SECONDS.MILLISECONDS",
+        help="end position",
     )
     parser.add_argument(
         "--size",
@@ -73,13 +81,13 @@ def run(args: Namespace):
             if args.output is not None
             else check_empty_folder(Path(video.stem))
         )
+        duration = get_video_duration(video)
+        start, end = args.start or 0, args.end or int(duration)
+        count = args.count if args.fps is None else int((end - start) * args.fps)
+        print(f"Extract {count} thumbnails from {color_str(video)}")
 
-        print(f"Extract {args.count} thumbnails from {color_str(video)}")
-
-        count = 0
-        for frame, seconds in iter_video_frames(
-            video, args.count, start=args.start, end=args.end
-        ):
+        index = 0
+        for frame, seconds in iter_video_frames(video, count, start=start, end=end):
             position = str(timedelta(seconds=int(seconds)))
             filename = (
                 (f"{video.stem} " if args.prefix is None else args.prefix)
@@ -90,9 +98,9 @@ def run(args: Namespace):
             auto_resize_image(
                 frame, destination, args.size, crop=args.crop, fill=args.fill
             )
+            index += 1
             print(
-                f"  {color_str(destination)} ({Resolution.from_image(destination)}) at position {position}"
+                f"[{index}/{count}] {color_str(destination)} ({Resolution.from_image(destination)}) at position {position}"
             )
-            count += 1
 
-        print(f"🍺 {count} thumbnails extracted in {color_str(folder)}")
+        print(f"🍺 {index} thumbnails extracted in {color_str(folder)}")

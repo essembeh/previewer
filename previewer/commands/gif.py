@@ -2,15 +2,14 @@
 command line interface
 """
 from argparse import ONE_OR_MORE, ArgumentParser, BooleanOptionalAction, Namespace
+from datetime import timedelta
 from operator import itemgetter
 from pathlib import Path
-
-from previewer.commands.montage import timedelta
 
 from ..logger import DEBUG
 from ..resolution import Resolution
 from ..utils import color_str, is_video, iter_images_in_folder, iter_img
-from ..video import get_video_duration, iter_video_frames
+from ..video import get_video_duration, iter_video_frames, position_to_seconds
 from ..wand import auto_resize_img, create_gif
 
 
@@ -56,15 +55,15 @@ def configure(parser: ArgumentParser):
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
         "--delay",
-        type=lambda x: int(int(x) / 10),
-        default=50,
+        type=int,
+        default=500,
+        metavar="MILLISECONDS",
         help="delay for frames in ms, default is 500",
     )
     group.add_argument(
         "--fps",
-        dest="delay",
-        type=lambda x: int(100 / int(x)),
-        help="frame per second, default is 2",
+        type=int,
+        help="frame per second",
     )
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
@@ -77,6 +76,18 @@ def configure(parser: ArgumentParser):
         "--speed",
         type=int,
         help="calculate frames count to extract to respect given speed (only for videos)",
+    )
+    parser.add_argument(
+        "--start",
+        type=position_to_seconds,
+        metavar="SECONDS.MILLISECONDS",
+        help="start position (only for videos)",
+    )
+    parser.add_argument(
+        "--end",
+        type=position_to_seconds,
+        metavar="SECONDS.MILLISECONDS",
+        help="end position (only for videos)",
     )
     parser.add_argument(
         "--size",
@@ -95,6 +106,11 @@ def configure(parser: ArgumentParser):
         action=BooleanOptionalAction,
         default=False,
         help="fill thumbnails",
+    )
+    parser.add_argument(
+        "--aba",
+        action="store_true",
+        help="create an A-B-A sequence",
     )
     parser.add_argument(
         "input_files",
@@ -146,25 +162,28 @@ def run_folder(args: Namespace, folder: Path, output_file: Path):
             )
         ),
         output_file,
-        delay=args.delay,
+        delay=int(100 / args.fps if args.fps else args.delay / 10),
+        aba=args.aba,
     )
     print(f"🍺 Sequence generated {color_str(output_file)}")
 
 
 def run_video(args: Namespace, video: Path, output_file: Path):
-    # compute frame count if needed
-    count = args.count
-    if count is None:
-        duration = get_video_duration(video)
-        count = int(duration * (100 / args.delay))
-        if args.speed is not None:
-            count = int(count / args.speed)
-        DEBUG(
-            "Video duration is %s, extract %d frames, gif duration will be %s",
-            timedelta(seconds=duration),
-            count,
-            timedelta(milliseconds=count * args.delay * 10),
-        )
+    duration = get_video_duration(video)
+    start, end = args.start or 0, args.end or int(duration)
+    count = args.count or int(
+        (end - start) * args.fps if args.fps else (end - start) * (1000 / args.delay)
+    )
+    if args.speed is not None:
+        count = int(count / args.speed)
+    DEBUG(
+        "Video duration is %s, extract %d frames from %.3lf -> %.3lf, gif duration will be %s",
+        timedelta(seconds=duration),
+        count,
+        start,
+        end,
+        timedelta(milliseconds=count * args.delay * 10),
+    )
 
     print(
         f"🎬 Generate {args.extension} from video {color_str(video)} using {count} thumbnails"
@@ -177,9 +196,14 @@ def run_video(args: Namespace, video: Path, output_file: Path):
                 crop=args.crop,
                 fill=args.fill,
             )
-            for img in iter_img(map(itemgetter(0), iter_video_frames(video, count)))
+            for img in iter_img(
+                map(
+                    itemgetter(0), iter_video_frames(video, count, start=start, end=end)
+                )
+            )
         ),
         output_file,
-        delay=args.delay,
+        delay=int(100 / args.fps if args.fps else args.delay / 10),
+        aba=args.aba,
     )
     print(f"🍺 Sequence generated {color_str(output_file)}")
