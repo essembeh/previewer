@@ -79,12 +79,6 @@ def configure(parser: ArgumentParser):
         help="calculate frames count to extract to respect given speed (only for videos)",
     )
     parser.add_argument(
-        "--colors",
-        type=int,
-        default=256,
-        help="gif colors",
-    )
-    parser.add_argument(
         "--size",
         type=Resolution,
         default=Resolution(640, 480),

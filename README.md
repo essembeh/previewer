@@ -5,14 +5,14 @@
 
 # Previewer
 
-Command line tools to generate previews from video clips or folders containing images.
+Command line tool to generate montages/sequences from video clips or folders containing images.
 
 _previewer_ is a collection of tools:
 
-- `previewer montage`: to generate a single image with thumbnails from a _folder_ containing images or a video clip
-- `previewer gif`: to generate a Gif with thumbnails from a _folder_ containing images or a video clip
+- `previewer montage`: to generate a single image with thumbnails (a _montage_) from a folder containing images or a video
+- `previewer gif`: to generate a Gif (or mp4/webp/webm) with thumbnails from a folder containing images or a video
 - `previewer video-thumbnailer`: to extract a given number of thumbnails from a video clip
-- `previewer folder-thumbnailer`: to generate thumbnails (resized and cropped images) from a folder containing larger images
+- `previewer resize`: to change geometry (resize, crop, fit, fill) of images
 
 # Install
 
@@ -38,111 +38,95 @@ $ pip3 install git+https://github.com/essembeh/previewer
 $ previewer --help
 ```
 
-# Usage: `previewer montage`
+# Montage
+
+`previewer montage` can create _preview_ image from a folder containing images or a video.
+
+You can customize the generated image:
+
+- change the background color
+- change geometry (width, height, crop, fit or fill) of the thumbnails
+- show or hide the a title
+- show or hide image filenames
+- adjust the space between thumbnails
+- add a border, a shadow to thumbnails
+
+Example:
 
 ```sh
-$ previewer montage --help
-usage: previewer montage [-h] [-r] [-o OUTPUT] [-P PREFIX] [-S SUFFIX] [--polaroid | --no-polaroid] [--shadow | --no-shadow] [--auto_orient | --no-auto_orient] [--title | --no-title]
-                         [--filenames | --no-filenames] [-B BACKGROUND] [-C COLUMNS] [-R ROWS] [--size SIZE] [--crop | --no-crop] [--fill | --no-fill] [--offset OFFSET]
-                         input_files [input_files ...]
-
-positional arguments:
-  input_files           folders containing images or video files
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -r, --recursive       list images recursively (only for images folders)
-  -o OUTPUT, --output OUTPUT
-                        output folder (default is current folder)
-  -P PREFIX, --prefix PREFIX
-                        generated filename prefix
-  -S SUFFIX, --suffix SUFFIX
-                        generated filename prefix
-  --polaroid, --no-polaroid
-                        use polaroid style
-  --shadow, --no-shadow
-                        add shadow to thumbnails
-  --auto_orient, --no-auto_orient
-                        auto orient thumbnails
-  --title, --no-title   add file/folder name as preview title (default: True)
-  --filenames, --no-filenames
-                        add filenames under thumbnails (ignored for videos)
-  -B BACKGROUND, --background BACKGROUND
-                        montage background color, list of colors: https://imagemagick.org/script/color.php
-  -C COLUMNS, --columns COLUMNS
-                        preview columns count (default is 6)
-  -R ROWS, --rows ROWS  preview rows count
-  --size SIZE           thumbnail size (default is 256x256)
-  --crop, --no-crop     crop thumbnails (default: False)
-  --fill, --no-fill     fill thumbnails (default: False)
-  --offset OFFSET       thumbnail offset (default is 10)
+$ previewer montage --size 120x120 --crop --fill --background SlateGray1 "Rick Astley - Never Gonna Give You Up (Official Music Video).mp4"
+🎬 Generate montage from video ./Rick Astley - Never Gonna Give You Up (Official Music Video).mp4 using 36 thumbnails
+🍺 Montage generated ./Rick Astley - Never Gonna Give You Up (Official Music Video).jpg
 ```
 
-# Usage: `previewer gif`
+![Example of montage](images/montage.jpg)
+
+# Sequence
+
+`previewer gif` can generate sequences with images in a folder or extracted from a video.
+
+You can customize the sequence:
+
+- choose the format between _gif_, _mp4_, _webp_ or _webm_
+- adjust _fps_ (frames per seconds), _delay_ between 2 frames ...
+- when extrating frames from a video, you can either use a fixed number of frames to extract or compute it given a given _speed_
+- change geometry (width, height, crop, fit or fill) of the frames
+
+Example:
 
 ```sh
-$ previewer gif --help               
-usage: previewer gif [-h] [-r] [-o OUTPUT] [-P PREFIX] [-S SUFFIX] [--delay DELAY | --fps DELAY] [-n COUNT | --speed SPEED] [--colors COLORS] [--size SIZE] [--crop | --no-crop] [--fill | --no-fill]
-                     input_files [input_files ...]
-
-positional arguments:
-  input_files           folders containing images or video files
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -r, --recursive       list images recursively (only for images folders)
-  -o OUTPUT, --output OUTPUT
-                        output folder (default is current folder)
-  -P PREFIX, --prefix PREFIX
-                        generated filename prefix
-  -S SUFFIX, --suffix SUFFIX
-                        generated filename prefix
-  --delay DELAY         delay for frames in ms, default is 500
-  --fps DELAY           frame per second, default is 2
-  -n COUNT, --count COUNT
-                        thumbnails count for videos (default calculated given --delay/--fps)
-  --speed SPEED         calculate frames count to extract to respect given speed (only for videos)
-  --colors COLORS       gif colors
-  --size SIZE           thumbnail size (default is 640x480)
-  --crop, --no-crop     crop thumbnails (default: False)
-  --fill, --no-fill     fill thumbnails (default: False)
+$ previewer gif --size 320x240 --crop --fill -n 20 "Rick Astley - Never Gonna Give You Up (Official Music Video).mp4"
+🎬 Generate gif from video ./Rick Astley - Never Gonna Give You Up (Official Music Video).mp4 using 20 thumbnails
+🍺 Sequence generated ./Rick Astley - Never Gonna Give You Up (Official Music Video).gif
 ```
 
-# Usage: `previewer video-thumbnailer`
+![Example of sequence](images/sequence.gif)
 
 ```sh
-$ previewer video-thumbnailer --help
-usage: previewer video-thumbnailer [-h] [-o OUTPUT] [-n COUNT] [--size SIZE] [--crop | --no-crop] [--fill | --no-fill] videos [videos ...]
-
-positional arguments:
-  videos                video file
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -o OUTPUT, --output OUTPUT
-                        output folder (default is a new folder in current directory)
-  -n COUNT, --count COUNT
-                        thumbnails count (default is 20)
-  --size SIZE           thumbnail size
-  --crop, --no-crop     crop thumbnails (default is False) (default: False)
-  --fill, --no-fill     fill thumbnails (defailt is False) (default: False)
+$ previewer gif --start 3 --end 4 --fps 10 --aba --size 320x240 --crop --fill "Rick Astley - Never Gonna Give You Up (Official Music Video).mp4"
+🎬 Generate gif from video ./Rick Astley - Never Gonna Give You Up (Official Music Video).mp4 using 10 thumbnails
+🍺 Sequence generated ./Rick Astley - Never Gonna Give You Up (Official Music Video).gif
 ```
 
-# Usage: `previewer folder-thumbnailer`
+![Example of sequence with A-B-A loop](images/sequence-aba.gif)
+
+# Thumbnailer
+
+`previewer video-thumbnailer` can extract and resize/crop frames from a video
+
+You can also:
+
+- choose the frame count to extract
+- select a start position and/or a end position in the video
+- change geometry (width, height, crop, fit or fill) of the frames
+
+Example:
 
 ```sh
-$ previewer folder-thumbnailer --help
-usage: previewer folder-thumbnailer [-h] [-o OUTPUT] [-r] --size SIZE [--crop | --no-crop] [--fill | --no-fill] folders [folders ...]
+$ previewer video-thumbnailer -n 20 "Rick Astley - Never Gonna Give You Up (Official Music Video).mp4"
+Extract 20 thumbnails from ./Rick Astley - Never Gonna Give You Up (Official Music Video).mp4
+  Rick Astley - Never Gonna Give You Up (Official Music Video)/frame 01 (0:00:05).jpg (1920x1080) at position 0:00:05
+  Rick Astley - Never Gonna Give You Up (Official Music Video)/frame 02 (0:00:15).jpg (1920x1080) at position 0:00:15
+  Rick Astley - Never Gonna Give You Up (Official Music Video)/frame 03 (0:00:26).jpg (1920x1080) at position 0:00:26
+  Rick Astley - Never Gonna Give You Up (Official Music Video)/frame 04 (0:00:37).jpg (1920x1080) at position 0:00:37
+  Rick Astley - Never Gonna Give You Up (Official Music Video)/frame 05 (0:00:47).jpg (1920x1080) at position 0:00:47
+  Rick Astley - Never Gonna Give You Up (Official Music Video)/frame 06 (0:00:58).jpg (1920x1080) at position 0:00:58
+  Rick Astley - Never Gonna Give You Up (Official Music Video)/frame 07 (0:01:08).jpg (1920x1080) at position 0:01:08
+  Rick Astley - Never Gonna Give You Up (Official Music Video)/frame 08 (0:01:19).jpg (1920x1080) at position 0:01:19
+  Rick Astley - Never Gonna Give You Up (Official Music Video)/frame 09 (0:01:30).jpg (1920x1080) at position 0:01:30
+  Rick Astley - Never Gonna Give You Up (Official Music Video)/frame 10 (0:01:40).jpg (1920x1080) at position 0:01:40
+  Rick Astley - Never Gonna Give You Up (Official Music Video)/frame 11 (0:01:51).jpg (1920x1080) at position 0:01:51
+  Rick Astley - Never Gonna Give You Up (Official Music Video)/frame 12 (0:02:01).jpg (1920x1080) at position 0:02:01
+  Rick Astley - Never Gonna Give You Up (Official Music Video)/frame 13 (0:02:12).jpg (1920x1080) at position 0:02:12
+  Rick Astley - Never Gonna Give You Up (Official Music Video)/frame 14 (0:02:23).jpg (1920x1080) at position 0:02:23
+  Rick Astley - Never Gonna Give You Up (Official Music Video)/frame 15 (0:02:33).jpg (1920x1080) at position 0:02:33
+  Rick Astley - Never Gonna Give You Up (Official Music Video)/frame 16 (0:02:44).jpg (1920x1080) at position 0:02:44
+  Rick Astley - Never Gonna Give You Up (Official Music Video)/frame 17 (0:02:54).jpg (1920x1080) at position 0:02:54
+  Rick Astley - Never Gonna Give You Up (Official Music Video)/frame 18 (0:03:05).jpg (1920x1080) at position 0:03:05
+  Rick Astley - Never Gonna Give You Up (Official Music Video)/frame 19 (0:03:16).jpg (1920x1080) at position 0:03:16
+  Rick Astley - Never Gonna Give You Up (Official Music Video)/frame 20 (0:03:26).jpg (1920x1080) at position 0:03:26
+🍺 20 thumbnails extracted in Rick Astley - Never Gonna Give You Up (Official Music Video)/
 
-positional arguments:
-  folders               folders containging images
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -o OUTPUT, --output OUTPUT
-                        output folder (default is a new folder in current directory)
-  -r, --recursive       list images recursively (only for images folders)
-  --size SIZE           thumbnail size
-  --crop, --no-crop     crop thumbnails (default is False) (default: False)
-  --fill, --no-fill     fill thumbnails (defailt is False) (default: False)
 ```
+
+![Example of thumbnailer](images/frames.png)
