@@ -4,12 +4,24 @@ from pathlib import Path
 
 from ..resolution import Resolution
 from ..utils import auto_resize_image, check_empty_folder, check_video, color_str
-from ..video import iter_video_frames
+from ..video import iter_video_frames, position_to_seconds
 
 
 def configure(parser: ArgumentParser):
     parser.set_defaults(handler=run)
 
+    parser.add_argument(
+        "-P",
+        "--prefix",
+        type=str,
+        help="generated filename prefix (default is video filename)",
+    )
+    parser.add_argument(
+        "-S",
+        "--suffix",
+        type=str,
+        help="generated filename prefix (default frame time)",
+    )
     parser.add_argument(
         "-o",
         "--output",
@@ -22,6 +34,16 @@ def configure(parser: ArgumentParser):
         type=int,
         default=20,
         help="thumbnails count (default is 20)",
+    )
+    parser.add_argument(
+        "--start",
+        type=position_to_seconds,
+        help="start position (1234.123 or 1:23:45.123 format)",
+    )
+    parser.add_argument(
+        "--end",
+        type=position_to_seconds,
+        help="end position (1234.123 or 1:23:45.123 format)",
     )
     parser.add_argument(
         "--size",
@@ -47,19 +69,24 @@ def run(args: Namespace):
     for video in args.videos:
         video = check_video(video)
         folder = (
-            check_empty_folder(Path(video.stem))
-            if args.output is None
-            else check_empty_folder(args.output)
+            check_empty_folder(args.output)
+            if args.output is not None
+            else check_empty_folder(Path(video.stem))
         )
 
         print(f"Extract {args.count} thumbnails from {color_str(video)}")
 
         count = 0
-        for frame, seconds in iter_video_frames(video, args.count):
+        for frame, seconds in iter_video_frames(
+            video, args.count, start=args.start, end=args.end
+        ):
             position = str(timedelta(seconds=int(seconds)))
-            destination = (
-                folder / f"{video.stem} {frame.stem} ({position}){frame.suffix}"
+            filename = (
+                (f"{video.stem} " if args.prefix is None else args.prefix)
+                + f"{frame.stem}"
+                + (args.suffix if args.suffix is not None else f" ({position})")
             )
+            destination = folder / f"{filename}{frame.suffix}"
             auto_resize_image(
                 frame, destination, args.size, crop=args.crop, fill=args.fill
             )

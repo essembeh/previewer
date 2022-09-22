@@ -1,13 +1,44 @@
 from datetime import timedelta
 from math import floor, log
 from pathlib import Path
+from re import fullmatch
 from subprocess import DEVNULL, check_call, check_output
 from tempfile import TemporaryDirectory
-from typing import Iterator, Tuple
+from typing import Iterator, Optional, Tuple
 
 from .logger import DEBUG
 from .tools import TOOLS
 from .utils import check_image
+
+
+def position_to_seconds(text: str) -> float:
+    """
+    Parse a duration and return the secods count as float
+    Valid formats are
+        1234
+        1234.1
+        1234.12
+        1234.123
+        12:34
+        12:34.1
+        12:34.12
+        12:34.123
+        1:23:45
+        1:23:45.1
+        1:23:45.12
+        1:23:45.123
+    """
+    pattern = r"(((?P<hours>[0-9]):)?(?P<minutes>[0-6]?[0-9]):)?(?P<seconds>[0-6]?[0-9](\.[0-9]{1,3})?)"
+    matcher = fullmatch(pattern, text)
+    if matcher is None:
+        out = float(text)
+    else:
+        out = float(matcher.group("seconds"))
+        if matcher.group("minutes"):
+            out += int(matcher.group("minutes")) * 60
+            if matcher.group("hours"):
+                out += int(matcher.group("hours")) * 3600
+    return out
 
 
 def get_video_duration(video: Path) -> float:
@@ -34,28 +65,40 @@ def get_video_duration(video: Path) -> float:
 def iter_video_frames(
     video: Path,
     count: int,
+    start: Optional[float] = None,
+    end: Optional[float] = None,
     extension: str = "jpg",
 ) -> Iterator[Tuple[Path, float]]:
     """
     Iterate over given number of frames from a video
     """
     duration = get_video_duration(video)
-    delta = duration / (count + 1)
+
+    if start is None:
+        start = (duration / count) / 2
+    if end is None:
+        end = duration - (duration / count) / 2
+
+    assert (
+        0 <= start < end <= duration
+    ), f"Invalid start/end position, must be [0-{duration:.3f}]"
+
+    step = 0 if count == 1 else (end - start) / (count - 1)
     digits = floor(log(count, 10)) + 1
 
     with TemporaryDirectory() as tmp:
         folder = Path(tmp)
-        for index in range(1, count + 1):
-            seconds = index * delta
+        for index in range(0, count):
+            seconds = start + index * step
             DEBUG(
                 "extract frame %d/%d at position %s",
-                index,
+                index + 1,
                 count,
                 timedelta(seconds=seconds),
             )
             yield extract_frame(
                 video,
-                folder / f"{index:0{digits}}.{extension}",
+                folder / f"{(index+1):0{digits}}.{extension}",
                 seconds=seconds,
             ), seconds
 
