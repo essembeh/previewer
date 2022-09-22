@@ -1,3 +1,4 @@
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
@@ -36,7 +37,9 @@ def auto_resize_img(
     """
     Resize/crop the given image
     """
+    start = time.time()
     orig_size = Resolution.from_img(image)
+
     if resolution is not None and resolution.size != image.size:
         if crop and fill:
             crop_fill(image, resolution)
@@ -47,11 +50,12 @@ def auto_resize_img(
         elif not crop and not fill:
             resize_fit(image, resolution)
     DEBUG(
-        "resize image from %s -> %s, crop=%s, fill=%s",
+        "resize image from %s -> %s, crop=%s, fill=%s (%.1f seconds)",
         orig_size,
         Resolution.from_img(image),
         crop,
         fill,
+        time.time() - start,
     )
     return image
 
