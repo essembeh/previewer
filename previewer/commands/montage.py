@@ -17,7 +17,7 @@ from ..utils import (
     iter_images_in_folder,
     parser_group,
 )
-from ..video import iter_video_frames
+from ..video import Position, get_video_duration, iter_video_frames
 
 
 def configure(parser: ArgumentParser):
@@ -51,11 +51,6 @@ def configure(parser: ArgumentParser):
             action="store_true",
             help="list images recursively",
         )
-        group.add_argument(
-            "--filenames",
-            action=BooleanOptionalAction,
-            help="add filenames under thumbnails",
-        )
 
     ## Video only
     with parser_group(parser, name="only for videos") as group:
@@ -64,6 +59,20 @@ def configure(parser: ArgumentParser):
             "--count",
             type=int,
             help="number of frames to extract (default: columns * columns)",
+        )
+        group.add_argument(
+            "--start",
+            type=Position,
+            metavar="POSITION",
+            default="5%",
+            help="start position (default: 5%)",
+        )
+        group.add_argument(
+            "--end",
+            type=Position,
+            metavar="POSITION",
+            default="-5%",
+            help="end position (default: -5%)",
         )
 
     ## Montage options
@@ -88,6 +97,11 @@ def configure(parser: ArgumentParser):
             action=BooleanOptionalAction,
             default=True,
             help="add file/folder name as preview title",
+        )
+        group.add_argument(
+            "--filenames",
+            action=BooleanOptionalAction,
+            help="add filenames under thumbnails",
         )
         group.add_argument(
             "--font",
@@ -210,6 +224,9 @@ def run_video(
 ):
     count = args.count or (args.columns * args.columns)
     print(f"🎬 Generate montage from video {color_str(video)} using {count} thumbnails")
+    duration = get_video_duration(video)
+    start = args.start.get_seconds(duration)
+    end = args.end.get_seconds(duration)
     montage.build(
         (
             auto_resize_image(
@@ -219,7 +236,7 @@ def run_video(
                 crop=args.crop,
                 fill=args.fill,
             )
-            for frame, position in iter_video_frames(video, count)
+            for frame, position in iter_video_frames(video, count, start=start, end=end)
         ),
         output_jpg,
         filenames=args.filenames,
