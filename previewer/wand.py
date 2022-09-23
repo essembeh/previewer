@@ -4,7 +4,7 @@ Wand related manipulation functions
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Optional
 
 from wand.image import Image
 
@@ -171,7 +171,7 @@ def create_gif(
     output_file: Path,
     delay: int = 50,
     optimize: bool = True,
-    aba: bool = False,
+    aba_loop: Optional[str] = None,
 ):
     """
     Create a gif with the given images
@@ -180,15 +180,20 @@ def create_gif(
         queue = []
         for frame in frames:
             gif.sequence.append(frame)
-            if aba:
+            if aba_loop is not None:
                 queue.append(frame.clone())
-        if aba:
+        if aba_loop is not None:
             # if A-B-A mode, add image in reverse order
             queue.reverse()
-            # skip first and last to prevent 2 identical consecutive frames
-            queue = queue[1:-1]
+            if aba_loop == "aba" and len(queue) > 2:
+                # skip first and last to prevent 2 identical consecutive frames
+                queue.pop(0).destroy()
+                queue.pop(-1).destroy()
             for frame in queue:
                 gif.sequence.append(frame)
+                # ba frames are reated
+                frame.destroy()
+
         DEBUG("set gif delay to %d", delay)
         for frame in gif.sequence:
             frame.delay = delay

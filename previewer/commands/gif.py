@@ -107,10 +107,20 @@ def configure(parser: ArgumentParser):
         default=False,
         help="fill thumbnails",
     )
-    parser.add_argument(
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
         "--aba",
-        action="store_true",
+        action="store_const",
+        dest="aba",
+        const="aba",
         help="create an A-B-A sequence",
+    )
+    group.add_argument(
+        "--abba",
+        action="store_const",
+        dest="aba",
+        const="abba",
+        help="create an A-B-B-A sequence",
     )
     parser.add_argument(
         "input_files",
@@ -163,7 +173,7 @@ def run_folder(args: Namespace, folder: Path, output_file: Path):
         ),
         output_file,
         delay=int(100 / args.fps if args.fps else args.delay / 10),
-        aba=args.aba,
+        aba_loop=args.aba,
     )
     print(f"🍺 Sequence generated {color_str(output_file)}")
 
@@ -204,6 +214,6 @@ def run_video(args: Namespace, video: Path, output_file: Path):
         ),
         output_file,
         delay=int(100 / args.fps if args.fps else args.delay / 10),
-        aba=args.aba,
+        aba_loop=args.aba,
     )
     print(f"🍺 Sequence generated {color_str(output_file)}")
