@@ -8,49 +8,60 @@ from pathlib import Path
 from wand.image import Image
 
 from ..resolution import Resolution
-from ..utils import auto_resize_img, check_image, color_str, save_img
+from ..utils import auto_resize_img, check_image, color_str, parser_group, save_img
 
 
 def configure(parser: ArgumentParser):
     parser.set_defaults(handler=run)
 
+    ## Generated file
+    with parser_group(parser, name="output file options") as group:
+        group.add_argument(
+            "-o",
+            "--output",
+            type=Path,
+            metavar="FOLDER",
+            help="output folder (default is same directory as the original image)",
+        )
+        group.add_argument(
+            "-P",
+            "--prefix",
+            help="generated filename prefix",
+        )
+        group.add_argument(
+            "-S",
+            "--suffix",
+            help="generated filename suffix",
+        )
+
+    ## Geometry
+    with parser_group(parser, name="image geometry") as group:
+        group.add_argument(
+            "--size",
+            type=Resolution,
+            metavar="WIDTHxHEIGHT",
+            required=True,
+            help="thumbnail size",
+        )
+        group.add_argument(
+            "--crop",
+            action=BooleanOptionalAction,
+            default=False,
+            help="crop thumbnails",
+        )
+        group.add_argument(
+            "--fill",
+            action=BooleanOptionalAction,
+            default=False,
+            help="fill thumbnails",
+        )
+
     parser.add_argument(
-        "-o",
-        "--output",
+        "images",
+        nargs=ONE_OR_MORE,
         type=Path,
-        help="output folder (default is same directory as the original image)",
+        help="images to resize",
     )
-    parser.add_argument(
-        "-P",
-        "--prefix",
-        type=str,
-        help="generated filename prefix",
-    )
-    parser.add_argument(
-        "-S",
-        "--suffix",
-        type=str,
-        help="generated filename prefix",
-    )
-    parser.add_argument(
-        "--size",
-        type=Resolution,
-        required=True,
-        help="thumbnail size",
-    )
-    parser.add_argument(
-        "--crop",
-        action=BooleanOptionalAction,
-        default=False,
-        help="crop thumbnails (default is False)",
-    )
-    parser.add_argument(
-        "--fill",
-        action=BooleanOptionalAction,
-        default=False,
-        help="fill thumbnails (defailt is False)",
-    )
-    parser.add_argument("images", nargs=ONE_OR_MORE, type=Path, help="images to resize")
 
 
 def run(args: Namespace):

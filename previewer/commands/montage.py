@@ -10,110 +10,131 @@ from tempfile import TemporaryDirectory
 
 from ..imagemagick import Montage
 from ..resolution import Resolution
-from ..utils import auto_resize_image, color_str, is_video, iter_images_in_folder
+from ..utils import (
+    auto_resize_image,
+    color_str,
+    is_video,
+    iter_images_in_folder,
+    parser_group,
+)
 from ..video import iter_video_frames
 
 
 def configure(parser: ArgumentParser):
     parser.set_defaults(handler=run)
 
-    parser.add_argument(
-        "-r",
-        "--recursive",
-        action="store_true",
-        help="list images recursively (only for images folders)",
-    )
-    parser.add_argument(
-        "-o",
-        "--output",
-        type=Path,
-        help="output folder (default is current folder)",
-    )
-    parser.add_argument(
-        "-P",
-        "--prefix",
-        type=str,
-        help="generated filename prefix",
-    )
-    parser.add_argument(
-        "-S",
-        "--suffix",
-        type=str,
-        help="generated filename prefix",
-    )
-    parser.add_argument(
-        "--polaroid",
-        action=BooleanOptionalAction,
-        help="use polaroid style",
-    )
-    parser.add_argument(
-        "--shadow",
-        action=BooleanOptionalAction,
-        help="add shadow to thumbnails",
-    )
-    parser.add_argument(
-        "--auto_orient",
-        action=BooleanOptionalAction,
-        help="auto orient thumbnails",
-    )
-    parser.add_argument(
-        "--title",
-        action=BooleanOptionalAction,
-        default=True,
-        help="add file/folder name as preview title",
-    )
-    parser.add_argument(
-        "--filenames",
-        action=BooleanOptionalAction,
-        help="add filenames under thumbnails (ignored for videos)",
-    )
-    parser.add_argument(
-        "--font",
-        type=str,
-        help="font used for labels, use 'convert -list font' to list available fonts",
-    )
-    parser.add_argument(
-        "-B",
-        "--background",
-        help="montage background color, list of colors: https://imagemagick.org/script/color.php",
-    )
-    parser.add_argument(
-        "-C",
-        "--columns",
-        type=int,
-        default=6,
-        help="preview columns count (default is 6)",
-    )
-    parser.add_argument(
-        "-R",
-        "--rows",
-        type=int,
-        help="preview rows count",
-    )
-    parser.add_argument(
-        "--size",
-        type=Resolution,
-        default=Resolution(256, 256),
-        help="thumbnail size (default is 256x256)",
-    )
-    parser.add_argument(
-        "--crop",
-        action=BooleanOptionalAction,
-        default=False,
-        help="crop thumbnails",
-    )
-    parser.add_argument(
-        "--fill",
-        action=BooleanOptionalAction,
-        default=False,
-        help="fill thumbnails",
-    )
-    parser.add_argument(
-        "--offset",
-        type=int,
-        default=10,
-        help="thumbnail offset (default is 10)",
-    )
+    ## Generated file
+    with parser_group(parser, name="output file options") as group:
+        group.add_argument(
+            "-o",
+            "--output",
+            type=Path,
+            metavar="FOLDER",
+            help="output folder (default is current folder)",
+        )
+        group.add_argument(
+            "-P",
+            "--prefix",
+            help="generated filename prefix",
+        )
+        group.add_argument(
+            "-S",
+            "--suffix",
+            help="generated filename suffix",
+        )
+
+    ## Folder only
+    with parser_group(parser, name="only for folders") as group:
+        group.add_argument(
+            "-r",
+            "--recursive",
+            action="store_true",
+            help="list images recursively",
+        )
+        group.add_argument(
+            "--filenames",
+            action=BooleanOptionalAction,
+            help="add filenames under thumbnails",
+        )
+
+    ## Video only
+    with parser_group(parser, name="only for videos") as group:
+        group.add_argument(
+            "-n",
+            "--count",
+            type=int,
+            help="number of frames to extract (default: columns * columns)",
+        )
+
+    ## Montage options
+    with parser_group(parser, name="montage options") as group:
+        group.add_argument(
+            "--polaroid",
+            action=BooleanOptionalAction,
+            help="use polaroid style",
+        )
+        group.add_argument(
+            "--shadow",
+            action=BooleanOptionalAction,
+            help="add shadow to thumbnails",
+        )
+        group.add_argument(
+            "--auto_orient",
+            action=BooleanOptionalAction,
+            help="auto orient thumbnails",
+        )
+        group.add_argument(
+            "--title",
+            action=BooleanOptionalAction,
+            default=True,
+            help="add file/folder name as preview title",
+        )
+        group.add_argument(
+            "--font",
+            help="font used for labels, use 'convert -list font' to list available fonts",
+        )
+        group.add_argument(
+            "-b",
+            "--background",
+            help="montage background color, list of colors: https://imagemagick.org/script/color.php",
+        )
+        group.add_argument(
+            "-c",
+            "--columns",
+            type=int,
+            default=6,
+            help="preview columns count (default is 6)",
+        )
+        group.add_argument(
+            "--offset",
+            type=int,
+            default=10,
+            help="thumbnail offset (default is 10)",
+        )
+
+    ## Geometry
+    with parser_group(parser, name="image geometry") as group:
+        default_size = Resolution(256, 256)
+        group.add_argument(
+            "--size",
+            type=Resolution,
+            metavar="WIDTHxHEIGHT",
+            default=default_size,
+            help=f"thumbnail size (default: {default_size})",
+        )
+        group.add_argument(
+            "--crop",
+            action=BooleanOptionalAction,
+            default=False,
+            help="crop thumbnails",
+        )
+        group.add_argument(
+            "--fill",
+            action=BooleanOptionalAction,
+            default=False,
+            help="fill thumbnails",
+        )
+
     parser.add_argument(
         "input_files",
         type=Path,
@@ -187,8 +208,7 @@ def run_folder(
 def run_video(
     args: Namespace, montage: Montage, video: Path, output_jpg: Path, tmp_folder: Path
 ):
-    rows = args.rows or args.columns
-    count = args.columns * rows
+    count = args.count or (args.columns * args.columns)
     print(f"🎬 Generate montage from video {color_str(video)} using {count} thumbnails")
     montage.build(
         (

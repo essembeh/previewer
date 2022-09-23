@@ -29,13 +29,11 @@ def configure(parser: ArgumentParser):
     parser.add_argument(
         "-P",
         "--prefix",
-        type=str,
         help="generated filename prefix",
     )
     parser.add_argument(
         "-S",
         "--suffix",
-        type=str,
         help="generated filename prefix",
     )
     parser.add_argument(

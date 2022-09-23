@@ -8,7 +8,7 @@ from argparse import ArgumentParser
 from previewer.wand import DEFAULT_BLUR
 
 from . import __version__
-from .commands import gif, montage, montage2, resize, video_thumbnailer
+from .commands import montage, montage2, resize, sequence, video_thumbnailer
 from .logger import DEBUG, logger
 from .utils import color_str
 
@@ -65,8 +65,8 @@ def run():
     subparsers = parser.add_subparsers()
     video_thumbnailer(
         subparsers.add_parser(
-            "video-thumbnailer",
-            aliases=["vt"],
+            "frames",
+            aliases=["video-thumbnailer", "vt"],
             help="extract thumbnails from video clips",
         )
     )
@@ -76,10 +76,11 @@ def run():
             help="build an image with thumbnails from a video clip or a folder",
         )
     )
-    gif(
+    sequence(
         subparsers.add_parser(
-            "gif",
-            help="build a gif with thumbnails from a video clip or a folder",
+            "sequence",
+            aliases=["gif"],
+            help="build a sequence (gif or video) with thumbnails from a video clip or a folder",
         )
     )
     resize(

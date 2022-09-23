@@ -1,9 +1,11 @@
 import random
 import shutil
 import sys
+from argparse import _ActionsContainer
 from collections.abc import Iterable
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Iterator, Tuple
+from typing import Any, Generator, Iterator, Optional, Tuple
 
 import magic
 from colorama import Fore, Style
@@ -146,3 +148,13 @@ def iter_copy_tree(
         if mkdirs:
             destination_file.parent.mkdir(parents=True, exist_ok=True)
         yield source_file, destination_file
+
+
+@contextmanager
+def parser_group(
+    parser: _ActionsContainer, name: str = "options group", exclusive: bool = False
+) -> Generator[_ActionsContainer, None, None]:
+    if exclusive:
+        yield parser.add_mutually_exclusive_group()
+    else:
+        yield parser.add_argument_group(name)

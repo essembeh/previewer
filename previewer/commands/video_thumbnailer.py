@@ -3,74 +3,94 @@ from datetime import timedelta
 from pathlib import Path
 
 from ..resolution import Resolution
-from ..utils import auto_resize_image, check_empty_folder, check_video, color_str
+from ..utils import (
+    auto_resize_image,
+    check_empty_folder,
+    check_video,
+    color_str,
+    parser_group,
+)
 from ..video import get_video_duration, iter_video_frames, position_to_seconds
 
 
 def configure(parser: ArgumentParser):
     parser.set_defaults(handler=run)
 
-    parser.add_argument(
-        "-P",
-        "--prefix",
-        type=str,
-        help="generated filename prefix (default is video filename)",
-    )
-    parser.add_argument(
-        "-S",
-        "--suffix",
-        type=str,
-        help="generated filename prefix (default frame time)",
-    )
-    parser.add_argument(
-        "-o",
-        "--output",
-        type=Path,
-        help="output folder (default is a new folder in current directory)",
-    )
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument(
-        "--fps",
-        type=int,
-        help="frames per second",
-    )
-    group.add_argument(
-        "-n",
-        "--count",
-        type=int,
-        default=20,
-        help="thumbnails count (default is 20)",
-    )
+    ## Generated file
+    with parser_group(parser, name="output file options") as group:
+        group.add_argument(
+            "-o",
+            "--output",
+            type=Path,
+            metavar="FOLDER",
+            help="output folder (default is current folder)",
+        )
+        group.add_argument(
+            "-P",
+            "--prefix",
+            help="generated filename prefix (default is video filename)",
+        )
+        group.add_argument(
+            "-S",
+            "--suffix",
+            help="generated filename prefix (default frame time)",
+        )
+
+    ## Geometry
+    with parser_group(parser, name="image geometry") as group:
+        group.add_argument(
+            "--size",
+            type=Resolution,
+            metavar="WIDTHxHEIGHT",
+            help="thumbnail size",
+        )
+        group.add_argument(
+            "--crop",
+            action=BooleanOptionalAction,
+            default=False,
+            help="crop thumbnails",
+        )
+        group.add_argument(
+            "--fill",
+            action=BooleanOptionalAction,
+            default=False,
+            help="fill thumbnails",
+        )
+
+    with parser_group(parser, exclusive=True) as xgroup:
+        xgroup.add_argument(
+            "--fps",
+            type=int,
+            metavar="INT",
+            help="frames per second",
+        )
+        xgroup.add_argument(
+            "-n",
+            "--count",
+            type=int,
+            default=20,
+            help="thumbnails count (default is 20)",
+        )
+
     parser.add_argument(
         "--start",
         type=position_to_seconds,
-        metavar="SECONDS.MILLISECONDS",
+        metavar="SECONDS",
         help="start position",
     )
     parser.add_argument(
         "--end",
         type=position_to_seconds,
-        metavar="SECONDS.MILLISECONDS",
+        metavar="SECONDS",
         help="end position",
     )
+
     parser.add_argument(
-        "--size",
-        type=Resolution,
-        help="thumbnail size",
+        "videos",
+        nargs=ONE_OR_MORE,
+        type=Path,
+        help="video files",
     )
-    parser.add_argument(
-        "--crop",
-        action=BooleanOptionalAction,
-        default=False,
-        help="crop thumbnails (default is False)",
-    )
-    parser.add_argument(
-        "--fill",
-        action=BooleanOptionalAction,
-        default=False,
-        help="fill thumbnails (defailt is False)",
-    )
-    parser.add_argument("videos", nargs=ONE_OR_MORE, type=Path, help="video file")
 
 
 def run(args: Namespace):
