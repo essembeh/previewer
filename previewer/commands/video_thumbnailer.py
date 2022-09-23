@@ -10,7 +10,7 @@ from ..utils import (
     color_str,
     parser_group,
 )
-from ..video import get_video_duration, iter_video_frames, position_to_seconds
+from ..video import Position, get_video_duration, iter_video_frames
 
 
 def configure(parser: ArgumentParser):
@@ -74,15 +74,17 @@ def configure(parser: ArgumentParser):
 
     parser.add_argument(
         "--start",
-        type=position_to_seconds,
-        metavar="SECONDS",
-        help="start position",
+        type=Position,
+        metavar="POSITION",
+        default="5%",
+        help="start position (default: 5%)",
     )
     parser.add_argument(
         "--end",
-        type=position_to_seconds,
-        metavar="SECONDS",
-        help="end position",
+        type=Position,
+        metavar="POSITION",
+        default="-5%",
+        help="end position (default: -5%)",
     )
 
     parser.add_argument(
@@ -102,7 +104,8 @@ def run(args: Namespace):
             else check_empty_folder(Path(video.stem))
         )
         duration = get_video_duration(video)
-        start, end = args.start or 0, args.end or int(duration)
+        start = args.start.get_seconds(duration)
+        end = args.end.get_seconds(duration)
         count = args.count if args.fps is None else int((end - start) * args.fps)
         print(f"Extract {count} thumbnails from {color_str(video)}")
 

@@ -5,7 +5,7 @@ from argparse import _ActionsContainer
 from collections.abc import Iterable
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Generator, Iterator, Optional, Tuple
+from typing import Any, Generator, Iterator, Tuple
 
 import magic
 from colorama import Fore, Style

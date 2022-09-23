@@ -9,7 +9,7 @@ from pathlib import Path
 from ..logger import DEBUG
 from ..resolution import Resolution
 from ..utils import color_str, is_video, iter_images_in_folder, iter_img, parser_group
-from ..video import get_video_duration, iter_video_frames, position_to_seconds
+from ..video import Position, get_video_duration, iter_video_frames
 from ..wand import auto_resize_img, create_gif
 
 
@@ -70,15 +70,17 @@ def configure(parser: ArgumentParser):
     with parser_group(parser, name="only for videos") as group:
         group.add_argument(
             "--start",
-            type=position_to_seconds,
-            metavar="SECONDS",
-            help="start position",
+            type=Position,
+            metavar="POSITION",
+            default="5%",
+            help="start position (default: 5%)",
         )
         group.add_argument(
             "--end",
-            type=position_to_seconds,
-            metavar="SECONDS",
-            help="end position",
+            type=Position,
+            metavar="POSITION",
+            default="-5%",
+            help="end position (default: -5%)",
         )
         with parser_group(parser, exclusive=True) as xgroup:
             xgroup.add_argument(
@@ -196,7 +198,8 @@ def run_folder(args: Namespace, folder: Path, output_file: Path):
 
 def run_video(args: Namespace, video: Path, output_file: Path):
     duration = get_video_duration(video)
-    start, end = args.start or 0, args.end or int(duration)
+    start = args.start.get_seconds(duration)
+    end = args.end.get_seconds(duration)
     count = args.count or int(
         (end - start) * args.fps if args.fps else (end - start) * (1000 / args.delay)
     )

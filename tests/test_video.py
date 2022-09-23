@@ -19,19 +19,26 @@ def test_extract_images(sample_mp4):
 
 
 def test_parse_position():
-    for line in map(
-        str.strip,
-        """ 1234
-            1234.1
-            1234.12
-            1234.123
-            12:34
-            12:34.1
-            12:34.12
-            12:34.123
-            1:23:45
-            1:23:45.1
-            1:23:45.12
-            1:23:45.123 """.splitlines(),
-    ):
-        assert video.position_to_seconds(line) > 0
+
+    assert video.Position("0%").get_seconds(3600) == 0
+    assert video.Position("100%").get_seconds(3600) == 3600
+    assert video.Position("-0%").get_seconds(3600) == 3600
+    assert video.Position("-100%").get_seconds(3600) == 0
+    assert video.Position("10%").get_seconds(3600) == 360
+    assert video.Position("-10%").get_seconds(3600) == 3240
+
+    assert video.Position("12").get_seconds(3600) == 12
+    assert video.Position("12.777").get_seconds(3600) == 12.777
+    assert video.Position("120.777").get_seconds(3600) == 120.777
+    assert video.Position("-12").get_seconds(3600) == 3588
+    assert video.Position("-12.777").get_seconds(3600) == 3587.223
+    assert video.Position("-120.777").get_seconds(3600) == 3479.223
+
+    assert video.Position("0:00:12").get_seconds(7200) == 12
+    assert video.Position("0:01:12").get_seconds(7200) == 72
+    assert video.Position("1:10:12").get_seconds(7200) == 4212
+    assert video.Position("1:10:12.500").get_seconds(7200) == 4212.5
+    assert video.Position("-0:00:12").get_seconds(7200) == 7188
+    assert video.Position("-0:01:12").get_seconds(7200) == 7128
+    assert video.Position("-1:10:12").get_seconds(7200) == 2988
+    assert video.Position("-1:10:12.500").get_seconds(7200) == 2987.5

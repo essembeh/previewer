@@ -2,6 +2,7 @@
 Video related utility functions
 """
 import time
+from dataclasses import dataclass
 from datetime import timedelta
 from math import floor, log
 from pathlib import Path
@@ -13,6 +14,32 @@ from typing import Iterator, Optional, Tuple
 from .logger import DEBUG
 from .tools import TOOLS
 from .utils import check_image
+
+PATTERN = r"(?P<minus>-)?((((?P<hours>[0-9]{1,2}):)?(?P<minutes>[0-6]?[0-9]):)?(?P<seconds>[0-6]?[0-9](\.[0-9]{1,3})?)|(?P<seconds_only>[0-9]+(\.[0-9]{1,3})?)|(?P<percent>(100|[0-9]{1,2}))%)"
+
+
+@dataclass
+class Position:
+    expression: str
+
+    def get_seconds(self, duration: float) -> float:
+        matcher = fullmatch(PATTERN, self.expression)
+        assert matcher is not None, f"Cannot parse {self.expression}"
+
+        if matcher.group("percent") is not None:
+            out = duration * int(matcher.group("percent")) / 100
+        elif matcher.group("seconds_only") is not None:
+            out = float(matcher.group("seconds_only"))
+        else:
+            out = float(matcher.group("seconds"))
+            if matcher.group("minutes"):
+                out += int(matcher.group("minutes")) * 60
+                if matcher.group("hours"):
+                    out += int(matcher.group("hours")) * 3600
+        if matcher.group("minus") is not None:
+            out = duration - out
+        assert 0 <= out <= duration, f"Invalid position {self.expression}"
+        return out
 
 
 def position_to_seconds(text: str) -> float:
