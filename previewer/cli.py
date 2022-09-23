@@ -8,7 +8,7 @@ from argparse import ArgumentParser
 from previewer.wand import DEFAULT_BLUR
 
 from . import __version__
-from .commands import montage, montage2, resize, sequence, video_thumbnailer
+from .commands import montage, resize, sequence, video_thumbnailer
 from .logger import DEBUG, logger
 from .utils import color_str
 
@@ -87,12 +87,6 @@ def run():
         subparsers.add_parser(
             "resize",
             help="resize given images",
-        )
-    )
-    ## WIP commands
-    montage2(
-        subparsers.add_parser(
-            "montage2", help="work-in-progress replacement of montage subcommand"
         )
     )
 

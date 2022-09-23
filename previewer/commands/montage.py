@@ -131,7 +131,7 @@ def configure(parser: ArgumentParser):
         group.add_argument(
             "--fill",
             action=BooleanOptionalAction,
-            default=False,
+            default=True,
             help="fill thumbnails",
         )
 
