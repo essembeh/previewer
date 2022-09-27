@@ -28,10 +28,13 @@ class Montage:
         filenames: bool = False,
         title: Optional[str] = None,
     ) -> str:
+
+        images_args = [str(i) for i in images]
+
         command = [
             TOOLS.montage,
             "-tile",
-            self.columns,
+            self.columns if len(images_args) > self.columns else len(images_args),
         ]
         if self.th_size is None:
             command += [
@@ -59,10 +62,10 @@ class Montage:
             command += ["-shadow"]
         if self.font is not None:
             command += ["-font", self.font]
-        command += images
+        command += images_args
         command.append(output_jpg)
 
-        command = list(map(str, command))
+        command = [str(x) for x in command]
         command_str = shlex.join(command)
         DEBUG("montage command: %s", command_str)
         assert not output_jpg.exists()
