@@ -69,6 +69,7 @@ class Montage:
         command_str = shlex.join(command)
         DEBUG("montage command: %s", command_str)
         assert not output_jpg.exists()
+        output_jpg.parent.mkdir(parents=True, exist_ok=True)
         check_call(command)
         check_image(output_jpg)
         return command_str
