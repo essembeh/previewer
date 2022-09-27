@@ -56,7 +56,7 @@ def configure(parser: ArgumentParser):
         group.add_argument(
             "--crop",
             action=BooleanOptionalAction,
-            default=False,
+            default=True,
             help="crop thumbnails",
         )
         group.add_argument(
