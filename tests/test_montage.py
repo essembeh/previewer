@@ -70,17 +70,3 @@ def test_montage_shadow(tmp_path, gallery_dir):
     command = montage.build(iter_images_in_folder(gallery_dir), output)
     assert output.exists()
     assert " -shadow " in command
-
-
-def test_montage_auto_orient(tmp_path, gallery_dir):
-    output = tmp_path / "output1.jpg"
-    montage = Montage(font="DejaVu-Sans", auto_orient=False)
-    command = montage.build(iter_images_in_folder(gallery_dir), output)
-    assert output.exists()
-    assert " -auto-orient " not in command
-
-    output = tmp_path / "output2.jpg"
-    montage = Montage(font="DejaVu-Sans", auto_orient=True)
-    command = montage.build(iter_images_in_folder(gallery_dir), output)
-    assert output.exists()
-    assert " -auto-orient " in command

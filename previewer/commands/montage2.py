@@ -47,11 +47,6 @@ def configure(parser: ArgumentParser):
         help="add shadow to thumbnails",
     )
     parser.add_argument(
-        "--auto_orient",
-        action=BooleanOptionalAction,
-        help="auto orient thumbnails",
-    )
-    parser.add_argument(
         "--title",
         action=BooleanOptionalAction,
         default=True,

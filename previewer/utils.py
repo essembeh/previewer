@@ -113,9 +113,11 @@ def auto_resize_image(
     return shutil.copy2(source, destination)
 
 
-def iter_img(images: Iterable[Path]) -> Iterator[Image]:
+def iter_img(images: Iterable[Path], auto_orient: bool = True) -> Iterator[Image]:
     for image in images:
         with Image(filename=image) as img:
+            if auto_orient:
+                img.auto_orient()
             yield img
 
 

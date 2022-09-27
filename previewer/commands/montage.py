@@ -88,11 +88,6 @@ def configure(parser: ArgumentParser):
             help="add shadow to thumbnails",
         )
         group.add_argument(
-            "--auto_orient",
-            action=BooleanOptionalAction,
-            help="auto orient thumbnails",
-        )
-        group.add_argument(
             "--title",
             action=BooleanOptionalAction,
             default=True,
@@ -169,8 +164,6 @@ def run(args: Namespace):
         montage.polaroid = args.polaroid
     if args.shadow is not None:
         montage.shadow = args.shadow
-    if args.auto_orient is not None:
-        montage.auto_orient = args.auto_orient
 
     for folder_or_video in args.input_files:
         output_jpg = (
