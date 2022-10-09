@@ -1,12 +1,11 @@
-import shlex
 from dataclasses import dataclass
 from pathlib import Path
 from subprocess import check_call
 from typing import Iterable, Optional
 
+from .external import MONTAGE
 from .logger import DEBUG
 from .resolution import Resolution
-from .tools import TOOLS
 from .utils import check_image
 
 
@@ -29,47 +28,37 @@ class Montage:
         title: Optional[str] = None,
     ) -> str:
 
-        images_args = [str(i) for i in images]
-
-        command = [
-            TOOLS.montage,
-            "-tile",
-            self.columns if len(images_args) > self.columns else len(images_args),
-        ]
-        if self.th_size is None:
-            command += [
-                "-geometry",
-                f"+{self.th_offset}+{self.th_offset}",
+        with MONTAGE.new_command() as cmd:
+            images = list(images)
+            cmd += [
+                "-tile",
+                self.columns if len(images) > self.columns else len(images),
             ]
-        else:
-            command += [
-                "-geometry",
-                f"{self.th_size}^+{self.th_offset}+{self.th_offset}",
-            ]
+            if self.th_size is None:
+                cmd += [
+                    "-geometry",
+                    f"+{self.th_offset}+{self.th_offset}",
+                ]
+            else:
+                cmd += [
+                    "-geometry",
+                    f"{self.th_size}^+{self.th_offset}+{self.th_offset}",
+                ]
 
-        if title is not None:
-            command += ["-title", title]
-        if filenames:
+            cmd.append_if(title is not None, "-title", title)
             # doc: https://imagemagick.org/script/escape.php
-            command += ["-label", r"%t"]
-        if self.background:
-            command += ["-background", self.background]
-        if self.auto_orient:
-            command.append("-auto-orient")
-        if self.polaroid:
-            command.append("+polaroid")
-        if self.shadow:
-            command += ["-shadow"]
-        if self.font is not None:
-            command += ["-font", self.font]
-        command += images_args
-        command.append(output_jpg)
+            cmd.append_if(filenames, "-label", r"%t")
+            cmd.append_if(self.background, "-background", self.background)
+            cmd.append_if(self.auto_orient, "-auto-orient")
+            cmd.append_if(self.polaroid, "+polaroid")
+            cmd.append_if(self.shadow, "-shadow")
+            cmd.append_if(self.font is not None, "-font", self.font)
+            cmd += images
+            cmd.append(output_jpg)
 
-        command = [str(x) for x in command]
-        command_str = shlex.join(command)
-        DEBUG("montage command: %s", command_str)
-        assert not output_jpg.exists()
-        output_jpg.parent.mkdir(parents=True, exist_ok=True)
-        check_call(command)
-        check_image(output_jpg)
-        return command_str
+            DEBUG("montage command: %s", cmd)
+            assert not output_jpg.exists()
+            output_jpg.parent.mkdir(parents=True, exist_ok=True)
+            cmd.check_call()
+            check_image(output_jpg)
+            return str(cmd)

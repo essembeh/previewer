@@ -3,13 +3,22 @@ Wand related manipulation functions
 """
 import time
 from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
 from typing import Iterable, Optional
 
-from wand.image import Image
+from wand.image import GRAVITY_TYPES, Image
 
 from .logger import DEBUG
 from .resolution import Resolution
+
+
+class Operation(Enum):
+    CROP_BLUR = "crop with blur"
+    CROP_FILL = "crop and fill"
+    RESIZE_LOOSE = "resize"
+    RESIZE_FIT = "resize fit"
+    RESIZE_FILL = "resize fill"
 
 
 @dataclass
@@ -30,12 +39,100 @@ class BlurGenerator:
         if self.blur_sigma > 0:
             image.gaussian_blur(sigma=self.blur_sigma)
         image.level(black=self.black, white=self.white, gamma=self.gamma)
+        return image
 
     def __str__(self):
         return f"blur:{self.blur_sigma}:{self.black}:{self.white}:{self.gamma}"
 
 
 DEFAULT_BLUR = BlurGenerator(30, 0, 1, 0.7)
+
+
+@dataclass
+class ImageResizer:
+    """
+    Utility class to resize/crop images
+    """
+
+    size: Resolution
+    keep_aspect_ratio: bool = True
+    fill: bool = True
+    crop: bool = True
+    crop_gravity: str = "center"
+    crop_blur: BlurGenerator = DEFAULT_BLUR
+
+    def __post_init__(self):
+        assert (
+            self.crop_gravity in GRAVITY_TYPES
+        ), f"Invalid gravity {self.crop_gravity}, must be {GRAVITY_TYPES}"
+
+    def resize(self, image: Image) -> Image:
+        """
+        Resize the given image
+        """
+        start = time.time()
+        orig_size = Resolution.from_img(image)
+        if self.size is None:
+            # do nothing
+            pass
+        elif orig_size == self.size:
+            # nothing to do
+            pass
+        elif self.crop:
+            # crop
+            if self.fill:
+                # crop and fill
+                image.transform(resize=f"{self.size}^")
+                image.crop(
+                    width=self.size.width,
+                    height=self.size.height,
+                    gravity=self.crop_gravity,
+                )
+            else:
+                # crop and fit
+                with image.clone() as thumbnail:
+                    # resize thumbnail
+                    thumbnail.transform(resize=f"{self.size}")
+                    if thumbnail.size == self.size.size:
+                        # no need to generate background
+                        image.transform(resize=f"{self.size}")
+                    else:
+                        # blur the image as filling background
+                        if self.keep_aspect_ratio:
+                            image.transform(resize=f"{self.size}^")
+                        else:
+                            image.transform(resize=f"{self.size}!")
+                        image.crop(
+                            width=self.size.width,
+                            height=self.size.height,
+                            gravity=self.crop_gravity,
+                        )
+                        self.crop_blur.apply(image)
+                        image.composite(
+                            thumbnail,
+                            left=int((self.size.width - thumbnail.width) / 2),
+                            top=int((self.size.height - thumbnail.height) / 2),
+                        )
+        else:
+            # resize
+            if not self.keep_aspect_ratio:
+                # force size
+                image.transform(resize=f"{self.size}!")
+            elif self.fill:
+                # resize and fill
+                image.transform(resize=f"{self.size}^")
+            else:
+                # resize and fit
+                image.transform(resize=f"{self.size}")
+        DEBUG(
+            "%s and %s image from %s -> %s (%.1f seconds)",
+            "Crop" if self.crop else "Resize",
+            "force" if self.keep_aspect_ratio else ("fill" if self.fill else "fit"),
+            orig_size,
+            Resolution.from_img(image),
+            time.time() - start,
+        )
+        return image
 
 
 def auto_resize_img(
@@ -193,6 +290,8 @@ def create_gif(
                 gif.sequence.append(frame)
                 # ba frames are reated
                 frame.destroy()
+
+        # TODO: try to use optimize_transparency/optimize_layers/coalesce for optimizations
 
         DEBUG("set gif delay to %d", delay)
         for frame in gif.sequence:

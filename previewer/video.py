@@ -7,12 +7,12 @@ from datetime import timedelta
 from math import floor, log
 from pathlib import Path
 from re import fullmatch
-from subprocess import DEVNULL, check_call, check_output
+from subprocess import DEVNULL
 from tempfile import TemporaryDirectory
 from typing import Iterator, Optional, Tuple
 
+from .external import FF_MPEG, FF_PROBE
 from .logger import DEBUG
-from .tools import TOOLS
 from .utils import check_image
 
 PATTERN = r"(?P<minus>-)?((((?P<hours>[0-9]{1,2}):)?(?P<minutes>[0-6]?[0-9]):)?(?P<seconds>[0-6]?[0-9](\.[0-9]{1,3})?)|(?P<seconds_only>[0-9]+(\.[0-9]{1,3})?)|(?P<percent>(100|[0-9]{1,2}))%)"
@@ -42,45 +42,14 @@ class Position:
         return out
 
 
-def position_to_seconds(text: str) -> float:
-    """
-    Parse a duration and return the secods count as float
-    Valid formats are
-        1234
-        1234.1
-        1234.12
-        1234.123
-        12:34
-        12:34.1
-        12:34.12
-        12:34.123
-        1:23:45
-        1:23:45.1
-        1:23:45.12
-        1:23:45.123
-    """
-    pattern = r"(((?P<hours>[0-9]):)?(?P<minutes>[0-6]?[0-9]):)?(?P<seconds>[0-6]?[0-9](\.[0-9]{1,3})?)"
-    matcher = fullmatch(pattern, text)
-    if matcher is None:
-        out = float(text)
-    else:
-        out = float(matcher.group("seconds"))
-        if matcher.group("minutes"):
-            out += int(matcher.group("minutes")) * 60
-            if matcher.group("hours"):
-                out += int(matcher.group("hours")) * 3600
-    return out
-
-
 def get_video_duration(video: Path) -> float:
     """
     use ffprobe to get the video duration as float
     """
-    text = check_output(
-        [
-            TOOLS.ffprobe,
+    with FF_PROBE.new_command() as cmd:
+        cmd += [
             "-i",
-            str(video),
+            video,
             "-v",
             "quiet",
             "-show_entries",
@@ -89,8 +58,7 @@ def get_video_duration(video: Path) -> float:
             "-of",
             "default=noprint_wrappers=1:nokey=1",
         ]
-    )
-    return float(text)
+        return float(cmd.check_output())
 
 
 def iter_video_frames(
@@ -137,20 +105,12 @@ def extract_frame(video: Path, output: Path, seconds: float) -> Path:
     """
     if output.exists():
         raise FileExistsError(f"File already exists: {output}")
-    # prepare command
-    command = [
-        TOOLS.ffmpeg,
-        "-ss",
-        f"{seconds}",
-        "-i",
-        str(video),
-        "-frames:v",
-        "1",
-        str(output),
-    ]
-    # run command
-    start = time.time()
-    check_call(command, stdout=DEVNULL, stderr=DEVNULL)
-    DEBUG("Frame %s extracted in %.3lf sec", output, time.time() - start)
+
+    with FF_MPEG.new_command() as cmd:
+        cmd += ["-ss", seconds, "-i", video, "-frames:v", "1", output]
+        # run command
+        start = time.time()
+        cmd.check_call(stdout=DEVNULL, stderr=DEVNULL)
+        DEBUG("Frame %s extracted in %.3lf sec", output, time.time() - start)
 
     return check_image(output)

@@ -7,7 +7,7 @@ def test_montage(tmp_path, gallery_dir):
     montage = Montage(font="DejaVu-Sans")
     command = montage.build(iter_images_in_folder(gallery_dir), output)
     assert output.exists()
-    assert " -tile 6 " in command
+    assert " -tile 2 " in command
 
 
 def test_montage_filenames(tmp_path, gallery_dir):
@@ -38,10 +38,10 @@ def test_montage_background(tmp_path, gallery_dir):
 
 def test_montage_col(tmp_path, gallery_dir):
     output = tmp_path / "output.jpg"
-    montage = Montage(font="DejaVu-Sans", columns=8)
+    montage = Montage(font="DejaVu-Sans", columns=1)
     command = montage.build(iter_images_in_folder(gallery_dir), output)
     assert output.exists()
-    assert " -tile 8 " in command
+    assert " -tile 1 " in command
 
 
 def test_montage_polaroid(tmp_path, gallery_dir):
