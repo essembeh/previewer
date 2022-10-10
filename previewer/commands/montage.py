@@ -8,8 +8,8 @@ from datetime import timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from ..imagemagick import Montage
 from ..resolution import Resolution
+from ..tools.montage import Montage
 from ..utils import (
     auto_resize_image,
     color_str,

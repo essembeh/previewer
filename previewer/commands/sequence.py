@@ -8,9 +8,10 @@ from pathlib import Path
 
 from ..logger import DEBUG
 from ..resolution import Resolution
+from ..tools.sequence import create_gif
 from ..utils import color_str, is_video, iter_images_in_folder, iter_img, parser_group
 from ..video import Position, get_video_duration, iter_video_frames
-from ..wand import auto_resize_img, create_gif
+from ..wand import auto_resize_img
 
 
 def configure(parser: ArgumentParser):

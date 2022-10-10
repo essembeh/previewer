@@ -1,12 +1,11 @@
 from dataclasses import dataclass
 from pathlib import Path
-from subprocess import check_call
 from typing import Iterable, Optional
 
-from .external import MONTAGE
-from .logger import DEBUG
-from .resolution import Resolution
-from .utils import check_image
+from ..external import MONTAGE
+from ..logger import DEBUG
+from ..resolution import Resolution
+from ..utils import check_image
 
 
 @dataclass

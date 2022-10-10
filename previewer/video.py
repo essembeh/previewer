@@ -15,7 +15,7 @@ from .external import FF_MPEG, FF_PROBE
 from .logger import DEBUG
 from .utils import check_image
 
-PATTERN = r"(?P<minus>-)?((((?P<hours>[0-9]{1,2}):)?(?P<minutes>[0-6]?[0-9]):)?(?P<seconds>[0-6]?[0-9](\.[0-9]{1,3})?)|(?P<seconds_only>[0-9]+(\.[0-9]{1,3})?)|(?P<percent>(100|[0-9]{1,2}))%)"
+_POSITION_PATTERN = r"(?P<minus>-)?((((?P<hours>[0-9]{1,2}):)?(?P<minutes>[0-6]?[0-9]):)?(?P<seconds>[0-6]?[0-9](\.[0-9]{1,3})?)|(?P<seconds_only>[0-9]+(\.[0-9]{1,3})?)|(?P<percent>(100|[0-9]{1,2}))%)"
 
 
 @dataclass
@@ -23,7 +23,7 @@ class Position:
     expression: str
 
     def get_seconds(self, duration: float) -> float:
-        matcher = fullmatch(PATTERN, self.expression)
+        matcher = fullmatch(_POSITION_PATTERN, self.expression)
         assert matcher is not None, f"Cannot parse {self.expression}"
 
         if matcher.group("percent") is not None:

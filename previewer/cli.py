@@ -5,11 +5,10 @@ command line interface
 import logging
 from argparse import ArgumentParser
 
-from previewer.wand import DEFAULT_BLUR
-
 from . import __version__
 from .commands import montage, resize, sequence, video_thumbnailer
 from .logger import DEBUG, logger
+from .tools.blur import DEFAULT_BLUR
 from .utils import color_str
 
 

@@ -4,7 +4,7 @@ from previewer.utils import get_mime
 
 def test_get_video_duration(sample_mp4):
     duration = video.get_video_duration(sample_mp4)
-    assert 4 < duration < 6
+    assert 9 < duration < 11
 
 
 def test_extract_images(sample_mp4):

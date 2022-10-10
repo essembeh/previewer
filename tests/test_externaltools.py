@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from previewer.external import *
+from previewer.external import ExternalTool
 
 
 def test_echo():
@@ -12,5 +12,5 @@ def test_echo():
         cmd += ["another"]
         cmd.append_if(True, Path("/foo"))
         cmd.append_if(False, Path("/bar"))
-        check_call(cmd.command)
+        cmd.check_call()
         assert str(cmd) == "echo 'Hello World' 'an argument' another /foo"
