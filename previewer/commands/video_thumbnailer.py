@@ -77,14 +77,14 @@ def configure(parser: ArgumentParser):
         type=Position,
         metavar="POSITION",
         default="5%",
-        help="start position (default: 5%)",
+        help="start position (default: 5%%)",
     )
     parser.add_argument(
         "--end",
         type=Position,
         metavar="POSITION",
         default="-5%",
-        help="end position (default: -5%)",
+        help="end position (default: -5%%)",
     )
 
     parser.add_argument(
