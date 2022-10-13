@@ -10,14 +10,9 @@ from tempfile import TemporaryDirectory
 
 from ..resolution import Resolution
 from ..tools.montage import Montage
-from ..utils import (
-    auto_resize_image,
-    color_str,
-    is_video,
-    iter_images_in_folder,
-    parser_group,
-)
+from ..utils import color_str, is_video, iter_copy_tree, iter_images_in_folder
 from ..video import Position, get_video_duration, iter_video_frames
+from .utils import add_geometry_group, get_image_resizer, parser_group
 
 
 def configure(parser: ArgumentParser):
@@ -122,27 +117,7 @@ def configure(parser: ArgumentParser):
         )
 
     ## Geometry
-    with parser_group(parser, name="image geometry") as group:
-        default_size = Resolution(256, 256)
-        group.add_argument(
-            "--size",
-            type=Resolution,
-            metavar="WIDTHxHEIGHT",
-            default=default_size,
-            help=f"thumbnail size (default: {default_size})",
-        )
-        group.add_argument(
-            "--crop",
-            action=BooleanOptionalAction,
-            default=False,
-            help="crop thumbnails",
-        )
-        group.add_argument(
-            "--fill",
-            action=BooleanOptionalAction,
-            default=True,
-            help="fill thumbnails",
-        )
+    add_geometry_group(parser, resolution_default=Resolution(256, 256))
 
     parser.add_argument(
         "input_files",
@@ -189,22 +164,19 @@ def run(args: Namespace):
 def run_folder(
     args: Namespace, montage: Montage, folder: Path, output_jpg: Path, tmp_folder: Path
 ):
+    resizer = get_image_resizer(args)
     count = len(list(iter_images_in_folder(folder, recursive=args.recursive)))
     assert count > 0, "Folder does not contain any image"
     print(
         f"📷 Generate montage from folder {color_str(folder)} containing {count} images"
     )
     montage.build(
-        (
-            auto_resize_image(
-                image,
-                tmp_folder / image.name,
-                resolution=args.size,
-                crop=args.crop,
-                fill=args.fill,
+        [
+            resizer.transform_file(source, dest)
+            for source, dest in iter_copy_tree(
+                folder, tmp_folder, recursive=args.recursive, mkdirs=True
             )
-            for image in iter_images_in_folder(folder, recursive=args.recursive)
-        ),
+        ],
         output_jpg,
         filenames=args.filenames,
         title=folder.name if args.title else None,
@@ -215,22 +187,19 @@ def run_folder(
 def run_video(
     args: Namespace, montage: Montage, video: Path, output_jpg: Path, tmp_folder: Path
 ):
+    resizer = get_image_resizer(args)
     count = args.count or (args.columns * args.columns)
     print(f"🎬 Generate montage from video {color_str(video)} using {count} thumbnails")
     duration = get_video_duration(video)
     start = args.start.get_seconds(duration)
     end = args.end.get_seconds(duration)
     montage.build(
-        (
-            auto_resize_image(
-                frame,
-                tmp_folder / f"{timedelta(seconds=position)}.jpg",
-                resolution=args.size,
-                crop=args.crop,
-                fill=args.fill,
+        [
+            resizer.transform_file(
+                frame, tmp_folder / f"{timedelta(seconds=position)}.jpg"
             )
             for frame, position in iter_video_frames(video, count, start=start, end=end)
-        ),
+        ],
         output_jpg,
         filenames=args.filenames,
         title=video.name if args.title else None,

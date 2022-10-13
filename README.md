@@ -54,7 +54,7 @@ You can customize the generated image:
 Example:
 
 ```sh
-$ previewer montage --size 120x120 --crop --fill --background SlateGray1 "Rick Astley - Never Gonna Give You Up (Official Music Video).mp4"
+$ previewer montage --size 120x120 --crop --background SlateGray1 "Rick Astley - Never Gonna Give You Up (Official Music Video).mp4"
 🎬 Generate montage from video ./Rick Astley - Never Gonna Give You Up (Official Music Video).mp4 using 36 thumbnails
 🍺 Montage generated ./Rick Astley - Never Gonna Give You Up (Official Music Video).jpg
 ```
@@ -75,7 +75,7 @@ You can customize the sequence:
 Example:
 
 ```sh
-$ previewer gif --size 320x240 --crop --fill -n 20 "Rick Astley - Never Gonna Give You Up (Official Music Video).mp4"
+$ previewer gif --size 320x240 --crop -n 20 "Rick Astley - Never Gonna Give You Up (Official Music Video).mp4"
 🎬 Generate gif from video ./Rick Astley - Never Gonna Give You Up (Official Music Video).mp4 using 20 thumbnails
 🍺 Sequence generated ./Rick Astley - Never Gonna Give You Up (Official Music Video).gif
 ```
@@ -83,7 +83,7 @@ $ previewer gif --size 320x240 --crop --fill -n 20 "Rick Astley - Never Gonna Gi
 ![Example of sequence](images/sequence.gif)
 
 ```sh
-$ previewer gif --start 3 --end 4 --fps 10 --aba --size 320x240 --crop --fill "Rick Astley - Never Gonna Give You Up (Official Music Video).mp4"
+$ previewer gif --start 3:00 --end 4:00 --fps 10 --aba --size 320x240 --crop "Rick Astley - Never Gonna Give You Up (Official Music Video).mp4"
 🎬 Generate gif from video ./Rick Astley - Never Gonna Give You Up (Official Music Video).mp4 using 10 thumbnails
 🍺 Sequence generated ./Rick Astley - Never Gonna Give You Up (Official Music Video).gif
 ```

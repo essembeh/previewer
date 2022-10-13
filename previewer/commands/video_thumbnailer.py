@@ -1,16 +1,11 @@
-from argparse import ONE_OR_MORE, ArgumentParser, BooleanOptionalAction, Namespace
+from argparse import ONE_OR_MORE, ArgumentParser, Namespace
 from datetime import timedelta
 from pathlib import Path
 
 from ..resolution import Resolution
-from ..utils import (
-    auto_resize_image,
-    check_empty_folder,
-    check_video,
-    color_str,
-    parser_group,
-)
+from ..utils import check_empty_folder, check_video, color_str
 from ..video import Position, get_video_duration, iter_video_frames
+from .utils import add_geometry_group, get_image_resizer, parser_group
 
 
 def configure(parser: ArgumentParser):
@@ -37,25 +32,7 @@ def configure(parser: ArgumentParser):
         )
 
     ## Geometry
-    with parser_group(parser, name="image geometry") as group:
-        group.add_argument(
-            "--size",
-            type=Resolution,
-            metavar="WIDTHxHEIGHT",
-            help="thumbnail size",
-        )
-        group.add_argument(
-            "--crop",
-            action=BooleanOptionalAction,
-            default=False,
-            help="crop thumbnails",
-        )
-        group.add_argument(
-            "--fill",
-            action=BooleanOptionalAction,
-            default=False,
-            help="fill thumbnails",
-        )
+    add_geometry_group(parser)
 
     with parser_group(parser, exclusive=True) as xgroup:
         xgroup.add_argument(
@@ -96,6 +73,8 @@ def configure(parser: ArgumentParser):
 
 
 def run(args: Namespace):
+
+    resizer = get_image_resizer(args)
     for video in args.videos:
         video = check_video(video)
         folder = (
@@ -118,9 +97,7 @@ def run(args: Namespace):
                 + (args.suffix if args.suffix is not None else f" ({position})")
             )
             destination = folder / f"{filename}{frame.suffix}"
-            auto_resize_image(
-                frame, destination, args.size, crop=args.crop, fill=args.fill
-            )
+            resizer.transform_file(frame, destination)
             index += 1
             print(
                 f"[{index}/{count}] {color_str(destination)} ({Resolution.from_image(destination)}) at position {position}"

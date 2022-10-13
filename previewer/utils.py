@@ -1,19 +1,12 @@
 import random
-import shutil
 import sys
-from argparse import _ActionsContainer
 from collections.abc import Iterable
-from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Generator, Iterator, Tuple
+from typing import Any, Iterator, Tuple
 
 import magic
 from colorama import Fore, Style
-
 from wand.image import Image
-
-from .resolution import Resolution
-from .wand import auto_resize_img
 
 
 def get_mime(file: Path) -> str:
@@ -93,26 +86,6 @@ def iter_images_in_folder(
             yield item
 
 
-def auto_resize_image(
-    source: Path,
-    destination: Path,
-    resolution: Resolution,
-    crop: bool,
-    fill: bool,
-) -> Path:
-    """
-    resize the given image
-    """
-    if resolution is not None:
-        with Image(filename=source) as img:
-            if resolution.size != img.size:
-                return save_img(
-                    auto_resize_img(img, resolution, crop=crop, fill=fill), destination
-                )
-    # fallback copy, image
-    return shutil.copy2(source, destination)
-
-
 def iter_img(images: Iterable[Path], auto_orient: bool = True) -> Iterator[Image]:
     for image in images:
         with Image(filename=image) as img:
@@ -150,13 +123,3 @@ def iter_copy_tree(
         if mkdirs:
             destination_file.parent.mkdir(parents=True, exist_ok=True)
         yield source_file, destination_file
-
-
-@contextmanager
-def parser_group(
-    parser: _ActionsContainer, name: str = "options group", exclusive: bool = False
-) -> Generator[_ActionsContainer, None, None]:
-    if exclusive:
-        yield parser.add_mutually_exclusive_group()
-    else:
-        yield parser.add_argument_group(name)

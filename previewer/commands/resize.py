@@ -2,13 +2,13 @@
 command line interface
 """
 
-from argparse import ONE_OR_MORE, ArgumentParser, BooleanOptionalAction, Namespace
+from argparse import ONE_OR_MORE, ArgumentParser, Namespace
 from pathlib import Path
 
 from wand.image import Image
 
-from ..resolution import Resolution
-from ..utils import auto_resize_img, check_image, color_str, parser_group, save_img
+from ..utils import check_image, color_str, save_img
+from .utils import add_geometry_group, parser_group
 
 
 def configure(parser: ArgumentParser):
@@ -35,26 +35,7 @@ def configure(parser: ArgumentParser):
         )
 
     ## Geometry
-    with parser_group(parser, name="image geometry") as group:
-        group.add_argument(
-            "--size",
-            type=Resolution,
-            metavar="WIDTHxHEIGHT",
-            required=True,
-            help="thumbnail size",
-        )
-        group.add_argument(
-            "--crop",
-            action=BooleanOptionalAction,
-            default=False,
-            help="crop thumbnails",
-        )
-        group.add_argument(
-            "--fill",
-            action=BooleanOptionalAction,
-            default=False,
-            help="fill thumbnails",
-        )
+    add_geometry_group(parser, resolution_required=True)
 
     parser.add_argument(
         "images",

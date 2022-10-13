@@ -1,13 +1,16 @@
 """
 Wand related manipulation functions
 """
+import shutil
 import time
 from dataclasses import dataclass
+from pathlib import Path
 
 from wand.image import GRAVITY_TYPES, Image
 
 from ..logger import DEBUG
 from ..resolution import Resolution
+from ..utils import save_img
 from .blur import DEFAULT_BLUR, BlurGenerator
 
 
@@ -28,6 +31,15 @@ class ImageResizer:
         assert (
             self.crop_gravity in GRAVITY_TYPES
         ), f"Invalid gravity {self.crop_gravity}, must be {GRAVITY_TYPES}"
+
+    def transform_file(self, source: Path, dest: Path) -> Path:
+        if self.resolution is None or Resolution.from_image(source) == self.resolution:
+            # fallback copy, image
+            return shutil.copy2(source, dest)
+        else:
+            with Image(filename=source) as img:
+                save_img(self.transform(img), dest)
+        return dest
 
     def transform(self, image: Image) -> Image:
         """

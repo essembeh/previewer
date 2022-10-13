@@ -1,5 +1,5 @@
 from previewer.resolution import Resolution
-from previewer.tools.resize import ImageResizer
+from previewer.tools.resizer import ImageResizer
 from previewer.tools.sequence import create_gif
 from previewer.utils import get_mime
 from wand.image import Image

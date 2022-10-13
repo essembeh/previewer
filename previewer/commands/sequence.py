@@ -9,9 +9,9 @@ from pathlib import Path
 from ..logger import DEBUG
 from ..resolution import Resolution
 from ..tools.sequence import create_gif
-from ..utils import color_str, is_video, iter_images_in_folder, iter_img, parser_group
+from ..utils import color_str, is_video, iter_images_in_folder, iter_img
 from ..video import Position, get_video_duration, iter_video_frames
-from ..wand import auto_resize_img
+from .utils import add_geometry_group, parser_group
 
 
 def configure(parser: ArgumentParser):
@@ -45,27 +45,9 @@ def configure(parser: ArgumentParser):
         )
 
     ## Geometry
-    with parser_group(parser, name="image geometry") as group:
-        default_size = Resolution(640, 480)
-        group.add_argument(
-            "--size",
-            type=Resolution,
-            metavar="WIDTHxHEIGHT",
-            default=default_size,
-            help=f"thumbnail size (default: {default_size})",
-        )
-        group.add_argument(
-            "--crop",
-            action=BooleanOptionalAction,
-            default=True,
-            help="crop thumbnails",
-        )
-        group.add_argument(
-            "--fill",
-            action=BooleanOptionalAction,
-            default=False,
-            help="fill thumbnails",
-        )
+    add_geometry_group(
+        parser, resolution_default=Resolution(640, 480), crop_default=True
+    )
 
     ## Video only
     with parser_group(parser, name="only for videos") as group:

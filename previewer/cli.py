@@ -7,24 +7,8 @@ from argparse import ArgumentParser
 
 from . import __version__
 from .commands import montage, resize, sequence, video_thumbnailer
-from .logger import DEBUG, logger
-from .tools.blur import DEFAULT_BLUR
+from .logger import logger
 from .utils import color_str
-
-
-def configure_blur(text: str):
-    values = text.split(":")
-    assert len(values) == 4
-    if len(values[0]) > 0:
-        DEFAULT_BLUR.blur_sigma = float(values[0])
-    if len(values[1]) > 0:
-        DEFAULT_BLUR.black = float(values[1])
-    if len(values[2]) > 0:
-        DEFAULT_BLUR.white = float(values[2])
-    if len(values[3]) > 0:
-        DEFAULT_BLUR.gamma = float(values[3])
-    DEBUG("Configured blur: %s", DEFAULT_BLUR)
-    return values
 
 
 def run():
@@ -55,12 +39,6 @@ def run():
         help="print less information",
     )
 
-    parser.add_argument(
-        "--blur",
-        type=configure_blur,
-        help="blur option, format 'sigma:black:white:gamma' (float:float:float:float), "
-        + f"default is {DEFAULT_BLUR.blur_sigma}:{DEFAULT_BLUR.black}:{DEFAULT_BLUR.white}:{DEFAULT_BLUR.gamma}",
-    )
     subparsers = parser.add_subparsers()
     video_thumbnailer(
         subparsers.add_parser(

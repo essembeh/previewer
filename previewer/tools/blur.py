@@ -27,7 +27,7 @@ class BlurGenerator:
         return image
 
     def __str__(self):
-        return f"blur:{self.blur_sigma}:{self.black}:{self.white}:{self.gamma}"
+        return f"{self.blur_sigma}:{self.black}:{self.white}:{self.gamma}"
 
 
 DEFAULT_BLUR = BlurGenerator(30, 0, 1, 0.7)
