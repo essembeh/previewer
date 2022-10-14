@@ -6,7 +6,7 @@ import logging
 from argparse import ArgumentParser
 
 from . import __version__
-from .commands import montage, resize, sequence, video_thumbnailer
+from .commands import montage, resize, sequence, frames
 from .logger import logger
 from .utils import color_str
 
@@ -40,7 +40,7 @@ def run():
     )
 
     subparsers = parser.add_subparsers()
-    video_thumbnailer(
+    frames(
         subparsers.add_parser(
             "frames",
             aliases=["video-thumbnailer", "vt"],
