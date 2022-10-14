@@ -6,11 +6,11 @@ from wand.image import Image
 from ..logger import DEBUG
 
 
-def create_gif(
+def create_sequence(
     frames: Iterable[Image],
     output_file: Path,
     delay: int = 50,
-    optimize: bool = True,
+    gif_optimize: bool = True,
     aba_loop: Optional[str] = None,
 ):
     """
@@ -34,11 +34,11 @@ def create_gif(
                 # ba frames are reated
                 frame.destroy()
 
-        # TODO: try to use optimize_transparency/optimize_layers/coalesce for optimizations
+        # Gif only optimisation
+        if gif_optimize:
+            gif.optimize_transparency()
 
         DEBUG("set gif delay to %d", delay)
         for frame in gif.sequence:
             frame.delay = delay
-        if optimize:
-            gif.type = "optimize"
         gif.save(filename=output_file)

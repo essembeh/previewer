@@ -8,7 +8,7 @@ from pathlib import Path
 from wand.image import Image
 
 from ..utils import check_image, color_str, save_img
-from .utils import add_geometry_group, parser_group
+from .utils import add_geometry_group, get_image_resizer, parser_group
 
 
 def configure(parser: ArgumentParser):
@@ -46,13 +46,14 @@ def configure(parser: ArgumentParser):
 
 
 def run(args: Namespace):
+    resizer = get_image_resizer(args)
     for source_image in args.images:
         output_folder = args.output or source_image.parent
         print(
             f"{'Crop' if args.crop else 'Resize'} {color_str(source_image)} to {'fill' if args.fill else 'fit'} {args.size}"
         )
         with Image(filename=check_image(source_image)) as img:
-            img = auto_resize_img(img, args.size, crop=args.crop, fill=args.fill)
+            img = resizer.transform(img)
             suffix = (
                 args.suffix
                 if args.suffix is not None

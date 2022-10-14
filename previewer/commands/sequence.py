@@ -1,17 +1,17 @@
 """
 command line interface
 """
-from argparse import ONE_OR_MORE, ArgumentParser, BooleanOptionalAction, Namespace
+from argparse import ONE_OR_MORE, ArgumentParser, Namespace
 from datetime import timedelta
 from operator import itemgetter
 from pathlib import Path
 
 from ..logger import DEBUG
-from ..resolution import Resolution
-from ..tools.sequence import create_gif
+from ..tools.resizer import ImageResizer
+from ..tools.sequence import create_sequence
 from ..utils import color_str, is_video, iter_images_in_folder, iter_img
 from ..video import Position, get_video_duration, iter_video_frames
-from .utils import add_geometry_group, parser_group
+from .utils import add_geometry_group, get_image_resizer, parser_group
 
 
 def configure(parser: ArgumentParser):
@@ -45,9 +45,7 @@ def configure(parser: ArgumentParser):
         )
 
     ## Geometry
-    add_geometry_group(
-        parser, resolution_default=Resolution(640, 480), crop_default=True
-    )
+    add_geometry_group(parser, resolution_required=False, crop_default=True)
 
     ## Video only
     with parser_group(parser, name="only for videos") as group:
@@ -132,6 +130,7 @@ def configure(parser: ArgumentParser):
 
 
 def run(args: Namespace):
+    resizer = get_image_resizer(args)
     for folder_or_video in args.input_files:
         output_file = (
             (args.output or Path())
@@ -144,42 +143,38 @@ def run(args: Namespace):
             continue
 
         if folder_or_video.is_dir():
-            run_folder(args, folder_or_video, output_file)
+            run_folder(args, folder_or_video, output_file, resizer)
         elif is_video(folder_or_video):
-            run_video(args, folder_or_video, output_file)
+            run_video(args, folder_or_video, output_file, resizer)
         else:
             print(f"🙈 {color_str(folder_or_video)} is not a folder nor a video")
 
 
-def run_folder(args: Namespace, folder: Path, output_file: Path):
+def run_folder(args: Namespace, folder: Path, output_file: Path, resizer: ImageResizer):
     count = len(list(iter_images_in_folder(folder, recursive=args.recursive)))
     assert count > 0, "Folder does not contain any image"
 
     print(
         f"📷 Generate {args.extension} from folder {color_str(folder)} containing {count} images"
     )
-    create_gif(
-        (
-            auto_resize_img(
-                img,
-                resolution=args.size,
-                crop=args.crop,
-                fill=args.fill,
-            )
-            for img in iter_img(
+    create_sequence(
+        map(
+            resizer.transform,
+            iter_img(
                 iter_images_in_folder(
                     folder, recursive=args.recursive, shuffle=args.shuffle
                 )
-            )
+            ),
         ),
         output_file,
         delay=int(100 / args.fps if args.fps else args.delay / 10),
         aba_loop=args.aba,
+        gif_optimize=args.extension == "gif",
     )
     print(f"🍺 Sequence generated {color_str(output_file)}")
 
 
-def run_video(args: Namespace, video: Path, output_file: Path):
+def run_video(args: Namespace, video: Path, output_file: Path, resizer: ImageResizer):
     duration = get_video_duration(video)
     start = args.start.get_seconds(duration)
     end = args.end.get_seconds(duration)
@@ -200,22 +195,18 @@ def run_video(args: Namespace, video: Path, output_file: Path):
     print(
         f"🎬 Generate {args.extension} from video {color_str(video)} using {count} thumbnails"
     )
-    create_gif(
-        (
-            auto_resize_img(
-                img,
-                resolution=args.size,
-                crop=args.crop,
-                fill=args.fill,
-            )
-            for img in iter_img(
+    create_sequence(
+        map(
+            resizer.transform,
+            iter_img(
                 map(
                     itemgetter(0), iter_video_frames(video, count, start=start, end=end)
                 )
-            )
+            ),
         ),
         output_file,
         delay=int(100 / args.fps if args.fps else args.delay / 10),
         aba_loop=args.aba,
+        gif_optimize=args.extension == "gif",
     )
     print(f"🍺 Sequence generated {color_str(output_file)}")
