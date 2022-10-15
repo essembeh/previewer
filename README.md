@@ -83,7 +83,7 @@ $ previewer gif --size 320x240 --crop -n 20 "Rick Astley - Never Gonna Give You 
 ![Example of sequence](images/sequence.gif)
 
 ```sh
-$ previewer gif --start 3:00 --end 4:00 --fps 10 --aba --size 320x240 --crop "Rick Astley - Never Gonna Give You Up (Official Music Video).mp4"
+$ previewer gif --start 3:21 --duration 1 --fps 10 --aba --size 320x240 --crop "Rick Astley - Never Gonna Give You Up (Official Music Video).mp4"
 🎬 Generate gif from video ./Rick Astley - Never Gonna Give You Up (Official Music Video).mp4 using 10 thumbnails
 🍺 Sequence generated ./Rick Astley - Never Gonna Give You Up (Official Music Video).gif
 ```

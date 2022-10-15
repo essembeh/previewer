@@ -56,13 +56,20 @@ def configure(parser: ArgumentParser):
             default="5%",
             help="start position (default: 5%%)",
         )
-        group.add_argument(
-            "--end",
-            type=Position,
-            metavar="POSITION",
-            default="-5%",
-            help="end position (default: -5%%)",
-        )
+        with parser_group(parser, exclusive=True) as xgroup:
+            xgroup.add_argument(
+                "--end",
+                type=Position,
+                metavar="POSITION",
+                default="-5%",
+                help="end position (default: -5%%)",
+            )
+            xgroup.add_argument(
+                "--duration",
+                type=Position,
+                metavar="DURATION",
+                help="calculate --end given the length",
+            )
         with parser_group(parser, exclusive=True) as xgroup:
             xgroup.add_argument(
                 "-n",
@@ -177,7 +184,11 @@ def run_folder(args: Namespace, folder: Path, output_file: Path, resizer: ImageR
 def run_video(args: Namespace, video: Path, output_file: Path, resizer: ImageResizer):
     duration = get_video_duration(video)
     start = args.start.get_seconds(duration)
-    end = args.end.get_seconds(duration)
+    end = end = (
+        start + args.duration.get_seconds(duration)
+        if args.duration is not None
+        else args.end.get_seconds(duration)
+    )
     count = args.count or int(
         (end - start) * args.fps if args.fps else (end - start) * (1000 / args.delay)
     )
