@@ -58,7 +58,7 @@ def add_geometry_group(
             metavar="WIDTHxHEIGHT",
             required=resolution_required,
             help="thumbnail size"
-            + (f" (defailt: {resolution_default})" if resolution_default else ""),
+            + (f" (default: {resolution_default})" if resolution_default else ""),
         )
         group.add_argument(
             "--crop",

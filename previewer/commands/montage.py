@@ -117,7 +117,9 @@ def configure(parser: ArgumentParser):
         )
 
     ## Geometry
-    add_geometry_group(parser, resolution_default=Resolution(256, 256))
+    add_geometry_group(
+        parser, resolution_required=False, resolution_default=Resolution(256, 256)
+    )
 
     parser.add_argument(
         "input_files",
