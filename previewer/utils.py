@@ -105,7 +105,8 @@ def save_img(
             raise FileExistsError(f"{dest} already exists")
     if mkdirs:
         dest.parent.mkdir(parents=True, exist_ok=True)
-    image.save(filename=dest)
+    with dest.open("wb") as fp:
+        image.save(file=fp)
     return dest
 
 
