@@ -26,17 +26,28 @@
               }
             );
             # external tools called directly by app
-            propagatedBuildInputs = with pkgs; [
-              ffmpeg
-              imagemagickBig
+            propagatedBuildInputs = with pkgs; [ 
+              ffmpeg imagemagickBig 
             ];
           };
           default = self.packages.${system}.myapp;
         };
 
         devShells.default = pkgs.mkShell {
-          packages = [ 
-            poetry2nix.packages.${system}.poetry 
+          packages = with pkgs; [
+            # poetry
+            poetry2nix.packages.${system}.poetry
+            # external tools
+            ffmpeg imagemagickBig
+            # myapp
+            (pkgs.poetry2nix.mkPoetryEnv { 
+              projectDir = self; 
+              overrides = pkgs.poetry2nix.defaultPoetryOverrides.extend (
+                self: super: {
+                  wand = pkgs.python3Packages.wand;
+                }
+              );
+            })
           ];
         };
       });
