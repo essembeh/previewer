@@ -22,6 +22,7 @@ from .filters import (
     CropFit,
     DummyFilter,
     MultiFilters,
+    Polaroid,
     Resize,
     Shadow,
 )
@@ -120,6 +121,11 @@ def run():
 
     ## Montage options
     with parser_group(parser, name="montage options") as group:
+        group.add_argument(
+            "--polaroid",
+            action=BooleanOptionalAction,
+            help="add polaroid to thumbnails",
+        )
         group.add_argument(
             "--shadow",
             action=BooleanOptionalAction,
@@ -225,6 +231,8 @@ def run():
         resize_filter = CropFit(args.size)
 
     post_filters = MultiFilters()
+    if args.polaroid:
+        post_filters.add(Polaroid(background_color=args.background))
     if args.shadow:
         post_filters.add(Shadow(background_color=args.background))
 

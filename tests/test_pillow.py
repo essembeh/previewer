@@ -50,3 +50,11 @@ def test_montage(image):
 
     img2 = build_montage(images, 3)
     assert img2.size == (300 + 200 + 250 + 10 * 4, 200 + 200 + 10 * 3)
+
+
+def test_polaroid(image):
+
+    with Image.open(image) as img:
+        assert img.size == (800, 600)
+        img2 = filters.Polaroid().apply(img)
+        assert img2.size == (860, 840)

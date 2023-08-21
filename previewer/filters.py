@@ -145,3 +145,20 @@ class Shadow(DummyFilter):
         out.paste(image, (margin - min(offset[0], 0), margin - min(offset[1], 0)))
 
         return out
+
+
+@dataclass
+class Polaroid(DummyFilter):
+    border: float = 0.05
+    background_color: str = "#ffffff"
+    frame_color: str = "#fefefe"
+
+    def apply(self, image: Image.Image) -> Image.Image:
+        border = int(min(image.size) * self.border)
+        out = Image.new(
+            image.mode,
+            (image.size[0] + border * 2, image.size[1] + border * 8),
+            self.frame_color,
+        )
+        out.paste(image, (border, border))
+        return out
