@@ -14,7 +14,7 @@ class DummyFilter:
 
 
 @dataclass
-class MultiFilter(DummyFilter):
+class MultiFilters(DummyFilter):
     filters: List[DummyFilter] = field(default_factory=list)
 
     def add(self, filter_: DummyFilter):
@@ -25,6 +25,12 @@ class MultiFilter(DummyFilter):
         for filter_ in self.filters:
             out = filter_.apply(out)
         return out
+
+
+@dataclass
+class AutoOrient(DummyFilter):
+    def apply(self, image: Image.Image) -> Image.Image:
+        return ImageOps.exif_transpose(image)
 
 
 @dataclass

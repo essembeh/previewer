@@ -16,7 +16,15 @@ from PIL import Image, ImageFont
 
 from . import __version__
 from .collectors import collect_folder_images, insert_timestamp, iter_video_frames
-from .filters import CropFill, CropFit, DummyFilter, Resize, Shadow
+from .filters import (
+    AutoOrient,
+    CropFill,
+    CropFit,
+    DummyFilter,
+    MultiFilters,
+    Resize,
+    Shadow,
+)
 from .font import list_fira_variants, load_fira_font
 from .mime import is_video
 from .montage import build_montage
@@ -207,16 +215,18 @@ def run():
     )
     args = parser.parse_args()
 
-    pre_filter, post_filter = DummyFilter(), DummyFilter()
+    orient_filter = AutoOrient()
+    resize_filter = DummyFilter()
     if not args.crop:
-        pre_filter = Resize(args.size)
+        resize_filter = Resize(args.size)
     elif args.fill:
-        pre_filter = CropFill(args.size)
+        resize_filter = CropFill(args.size)
     else:
-        pre_filter = CropFit(args.size)
+        resize_filter = CropFit(args.size)
 
+    post_filters = MultiFilters()
     if args.shadow:
-        post_filter = Shadow(background_color=args.background)
+        post_filters.add(Shadow(background_color=args.background))
 
     text_font = (
         load_fira_font(
@@ -244,10 +254,12 @@ def run():
             for image in collect_folder_images(source, recursive=args.recursive):
                 # open file
                 with Image.open(image) as img:
+                    # auto orient
+                    img = orient_filter.apply(img)
                     # apply resize
-                    img = pre_filter.apply(img)
+                    img = resize_filter.apply(img)
                     # apply other filter
-                    img = post_filter.apply(img)
+                    img = post_filters.apply(img)
 
                     images.append(img)
             print(
@@ -268,12 +280,12 @@ def run():
                 # open file
                 with Image.open(frame) as img:
                     # apply resize
-                    img = pre_filter.apply(img)
+                    img = resize_filter.apply(img)
                     # insert timestamp
                     if args.ts:
                         img = insert_timestamp(img, ts, shadow=True)
                     # apply other filter
-                    img = post_filter.apply(img)
+                    img = post_filters.apply(img)
 
                 images.append(img)
 
