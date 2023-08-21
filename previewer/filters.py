@@ -90,7 +90,7 @@ class Shadow(DummyFilter):
     """
 
     size: float = 0.03
-    margin: float = 0.03
+    margin: float = 0.05
     background_color: str = "#ffffff"
     shadow_color: str = "#020202"
     shadow_blur_radius: float = 0.02
