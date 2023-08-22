@@ -57,4 +57,4 @@ def test_polaroid(image):
     with Image.open(image) as img:
         assert img.size == (800, 600)
         img2 = filters.Polaroid().apply(img)
-        assert img2.size == (860, 840)
+        assert img2.size == (860, 780)

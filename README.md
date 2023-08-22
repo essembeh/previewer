@@ -41,26 +41,26 @@ You can customize the generated image:
 - adjust the space between thumbnails
 - add a border, a shadow to thumbnails
 
-## Example: preview from a video
+## Example: generate a preview from a video clip
 
 We can build a preview image of a video using:
 
 ```sh
-$ previewer --crop --size 256 --shadow --background lightblue --title "samples/Rick Astley - Never Gonna Give You Up.mp4"
+$ previewer --crop 256 --shadow --title --background lightblue "samples/Rick Astley - Never Gonna Give You Up.mp4"
 🎬 Generate montage from video samples/Rick Astley - Never Gonna Give You Up.mp4 using 36 thumbnails
 🍺 Montage generated ./Rick Astley - Never Gonna Give You Up.jpg
 ```
 
 ![Video preview](images/preview-video.jpg)
 
-## Example: preview from a folder
+## Example: generate a preview from a folder containing images
 
 We can build a preview folder containing images like this:
 
 ![Folder with images](images/folder.png)
 
 ```sh
-$ previewer --columns 5 "samples/Rick Astley - Never Gonna Give You Up"
+$ previewer --columns 5 --polaroid --background b2967d "samples/Rick Astley - Never Gonna Give You Up"
 📷 Generate montage from folder samples/Rick Astley - Never Gonna Give You Up/ containing 20 images
 🍺 Montage generated ./Rick Astley - Never Gonna Give You Up.jpg
 ```

@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from random import randrange
 from typing import List
 
 from PIL import Image, ImageEnhance, ImageFilter, ImageOps
@@ -151,14 +152,26 @@ class Shadow(DummyFilter):
 class Polaroid(DummyFilter):
     border: float = 0.05
     background_color: str = "#ffffff"
-    frame_color: str = "#fefefe"
+    frame_color: str = "#f8f6f1"
 
     def apply(self, image: Image.Image) -> Image.Image:
         border = int(min(image.size) * self.border)
         out = Image.new(
             image.mode,
-            (image.size[0] + border * 2, image.size[1] + border * 8),
+            (image.size[0] + border * 2, image.size[1] + border * 6),
             self.frame_color,
         )
         out.paste(image, (border, border))
         return out
+
+
+@dataclass
+class Rotation(DummyFilter):
+    angle: int = 0
+    expand: bool = True
+    random: bool = False
+    background_color: str = "#ffffff"
+
+    def apply(self, image: Image.Image) -> Image.Image:
+        angle = randrange(self.angle * -1, self.angle) if self.random else self.angle
+        return image.rotate(angle, expand=self.expand, fillcolor=self.background_color)

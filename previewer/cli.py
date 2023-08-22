@@ -24,6 +24,7 @@ from .filters import (
     MultiFilters,
     Polaroid,
     Resize,
+    Rotation,
     Shadow,
 )
 from .font import list_fira_variants, load_fira_font
@@ -33,7 +34,7 @@ from .resolution import resolution_parse
 from .utils import color_str, save_img
 from .video import Position, get_video_duration
 
-DEFAULT_THUMBNAIL_SIZE = "640x480"
+DEFAULT_THUMBNAIL_SIZE = "400x400"
 
 
 @contextmanager
@@ -49,6 +50,18 @@ def parser_group(
 def fix_hex_color(value: str) -> str:
     matcher = re.fullmatch(r"[0-9a-f]{6}", value, flags=re.IGNORECASE)
     return value if matcher is None else f"#{value}"
+
+
+def parse_resize(size: str) -> DummyFilter:
+    return Resize(resolution_parse(size))
+
+
+def parse_crop(size: str) -> DummyFilter:
+    return CropFill(resolution_parse(size))
+
+
+def parse_cropfit(size: str) -> DummyFilter:
+    return CropFit(resolution_parse(size))
 
 
 def run():
@@ -119,8 +132,8 @@ def run():
             help="add timestamp to extracted frames",
         )
 
-    ## Montage options
-    with parser_group(parser, name="montage options") as group:
+    ## Effects options
+    with parser_group(parser, name="effects", exclusive=True) as group:
         group.add_argument(
             "--polaroid",
             action=BooleanOptionalAction,
@@ -131,6 +144,9 @@ def run():
             action=BooleanOptionalAction,
             help="add shadow to thumbnails",
         )
+
+    ## Montage options
+    with parser_group(parser, name="montage options") as group:
         group.add_argument(
             "-b",
             "--background",
@@ -154,37 +170,30 @@ def run():
         )
 
     ## Geometry
-    with parser_group(parser, name="thumbnails options") as group:
+    with parser_group(parser, name="resize options", exclusive=True) as group:
         group.add_argument(
             "-s",
-            "--size",
-            type=resolution_parse,
-            metavar="WIDTHxHEIGHT",
+            "--resize",
+            type=lambda t: Resize(resolution_parse(t)),
             default=DEFAULT_THUMBNAIL_SIZE,
-            help=f"thumbnail size (default is {DEFAULT_THUMBNAIL_SIZE})",
+            dest="resize",
+            metavar="WIDTHxHEIGHT",
+            help=f"resize thumbnails (default is {DEFAULT_THUMBNAIL_SIZE})",
         )
         group.add_argument(
             "--crop",
-            action=BooleanOptionalAction,
-            default=False,
+            type=lambda t: CropFill(resolution_parse(t)),
+            dest="resize",
+            metavar="WIDTHxHEIGHT",
             help="crop thumbnails",
         )
-        with parser_group(group, exclusive=True) as xgroup:
-            xgroup.add_argument(
-                "--fill",
-                action="store_const",
-                dest="fill",
-                const=True,
-                default=True,
-                help="fill thumbnails for crop mode",
-            )
-            xgroup.add_argument(
-                "--fit",
-                action="store_const",
-                dest="fill",
-                const=False,
-                help="fit thumbnails for crop mode",
-            )
+        group.add_argument(
+            "--crop-fit",
+            type=lambda t: CropFit(resolution_parse(t)),
+            dest="resize",
+            metavar="WIDTHxHEIGHT",
+            help="crop thumbnails and add blur background to fit the given size",
+        )
 
     ## Text options
     with parser_group(parser, name="text options") as group:
@@ -220,25 +229,22 @@ def run():
         help="folders containing images or video files",
     )
     args = parser.parse_args()
-
     orient_filter = AutoOrient()
-    resize_filter = DummyFilter()
-    if not args.crop:
-        resize_filter = Resize(args.size)
-    elif args.fill:
-        resize_filter = CropFill(args.size)
-    else:
-        resize_filter = CropFit(args.size)
+    resize_filter = args.resize
 
     post_filters = MultiFilters()
-    if args.polaroid:
-        post_filters.add(Polaroid(background_color=args.background))
     if args.shadow:
         post_filters.add(Shadow(background_color=args.background))
+    elif args.polaroid:
+        post_filters.add(Polaroid(background_color=args.background))
+        post_filters.add(Shadow(background_color=args.background))
+        post_filters.add(Rotation(15, random=True, background_color=args.background))
 
     text_font = (
         load_fira_font(
-            args.font_size if args.font_size is not None else int(args.size[1] / 10),
+            args.font_size
+            if args.font_size is not None
+            else int(resize_filter.size[1] / 10),
             variant=args.font_variant,
         )
         or ImageFont.load_default()
