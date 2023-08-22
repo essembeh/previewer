@@ -1,4 +1,4 @@
-from math import ceil
+from math import ceil, sqrt
 
 from PIL import Image, ImageDraw, ImageFont
 

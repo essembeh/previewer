@@ -16,6 +16,7 @@ from PIL import Image, ImageFont
 
 from . import __version__
 from .collectors import collect_folder_images, insert_timestamp, iter_video_frames
+from .disposition import find_best_disposition, get_video_best_disposition
 from .filters import (
     AutoOrient,
     CropFill,
@@ -159,14 +160,19 @@ def run():
             "-c",
             "--columns",
             type=int,
-            default=6,
-            help="preview columns count (default is 6)",
+            help="force the number of columns",
         )
         group.add_argument(
             "--margin",
             type=int,
             default=10,
             help="thumbnail margin (default is 10)",
+        )
+        group.add_argument(
+            "--ratio",
+            type=float,
+            default=16 / 9,
+            help="ratio used when columns number is automatically computed",
         )
 
     ## Geometry
@@ -264,7 +270,11 @@ def run():
 
         # extract images
         images = []
+        columns_count = args.columns
         if source.is_dir():
+            ##########################################
+            ## Extract from folder
+            ##
             for image in collect_folder_images(source, recursive=args.recursive):
                 # open file
                 with Image.open(image) as img:
@@ -276,18 +286,42 @@ def run():
                     img = post_filters.apply(img)
 
                     images.append(img)
+            # if no column number given, use best disposition
+            if columns_count is None:
+                columns_count = find_best_disposition(
+                    len(images), target_ratio=args.ratio
+                )
             print(
                 f"📷 Generate montage from folder {color_str(source)} containing {len(images)} images"
             )
         elif is_video(source):
+            ##########################################
+            ## Extract from video
+            ##
             duration = get_video_duration(source)
-            count = args.count or (args.columns * args.columns)
+            frame_count = args.count
+            if columns_count is None and frame_count is None:
+                columns_count, frame_count = get_video_best_disposition(
+                    duration, resolution=args.resize.size, target_ratio=args.ratio
+                )
+            elif columns_count is None:
+                # compute best disposition like what is done for folders
+                columns_count = find_best_disposition(
+                    frame_count,
+                    resolution=args.resize.size,
+                    target_ratio=args.ratio,
+                )
+            elif frame_count is None:
+                # compute best disposition
+                # TODO: use better algo here
+                frame_count = columns_count * columns_count
             print(
-                f"🎬 Generate montage from video {color_str(source)} using {count} thumbnails"
+                f"🎬 Generate montage from video {color_str(source)} using {frame_count} thumbnails"
             )
+            # extract frames
             for frame, ts in iter_video_frames(
                 source,
-                count=count,
+                count=frame_count,
                 start=args.start.get_seconds(duration),
                 end=args.end.get_seconds(duration),
             ):
@@ -303,13 +337,15 @@ def run():
 
                 images.append(img)
 
-        # build montage
+        ##########################################
+        ## build montage
+        ##
         if len(images) == 0:
             print(f"🙈 Cannot find any image from {color_str(source)}")
         else:
             result = build_montage(
                 images,
-                columns=args.columns,
+                columns=columns_count,
                 margin=args.margin,
                 background_color=args.background,
                 text=source.name if args.title else None,
