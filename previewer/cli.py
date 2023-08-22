@@ -12,11 +12,16 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Generator
 
+from lazy_object_proxy import Proxy
 from PIL import Image, ImageFont
 
 from . import __version__
 from .collectors import collect_folder_images, insert_timestamp, iter_video_frames
-from .disposition import find_best_disposition, get_video_best_disposition
+from .disposition import (
+    best_disposition_from_columns,
+    best_disposition_from_total,
+    best_disposition_from_video,
+)
 from .filters import (
     AutoOrient,
     CropFill,
@@ -275,6 +280,7 @@ def run():
             ##########################################
             ## Extract from folder
             ##
+            width_total, height_total = 0, 0
             for image in collect_folder_images(source, recursive=args.recursive):
                 # open file
                 with Image.open(image) as img:
@@ -282,15 +288,23 @@ def run():
                     img = orient_filter.apply(img)
                     # apply resize
                     img = resize_filter.apply(img)
+                    width_total += img.width
+                    height_total += img.height
                     # apply other filter
                     img = post_filters.apply(img)
 
                     images.append(img)
             # if no column number given, use best disposition
             if columns_count is None:
-                columns_count = find_best_disposition(
-                    len(images), target_ratio=args.ratio
+                disposition = best_disposition_from_total(
+                    len(images),
+                    resolution=(
+                        int(width_total / len(images)),
+                        int(height_total / len(images)),
+                    ),
+                    target_ratio=args.ratio,
                 )
+                columns_count = disposition.columns
             print(
                 f"📷 Generate montage from folder {color_str(source)} containing {len(images)} images"
             )
@@ -298,23 +312,32 @@ def run():
             ##########################################
             ## Extract from video
             ##
+            def get_first_frame_resolution():
+                for frame, _ in iter_video_frames(source, 1):
+                    with Image.open(frame) as img:
+                        return args.resize.apply(img).size
+
+            video_resolution = Proxy(get_first_frame_resolution)
             duration = get_video_duration(source)
             frame_count = args.count
             if columns_count is None and frame_count is None:
-                columns_count, frame_count = get_video_best_disposition(
-                    duration, resolution=args.resize.size, target_ratio=args.ratio
+                disposition = best_disposition_from_video(
+                    duration, resolution=video_resolution, target_ratio=args.ratio
                 )
+                columns_count = disposition.columns
+                frame_count = disposition.images_count
             elif columns_count is None:
                 # compute best disposition like what is done for folders
-                columns_count = find_best_disposition(
-                    frame_count,
-                    resolution=args.resize.size,
-                    target_ratio=args.ratio,
+                disposition = best_disposition_from_total(
+                    frame_count, resolution=video_resolution, target_ratio=args.ratio
                 )
+                columns_count = disposition.columns
             elif frame_count is None:
                 # compute best disposition
-                # TODO: use better algo here
-                frame_count = columns_count * columns_count
+                disposition = best_disposition_from_columns(
+                    columns_count, resolution=video_resolution, target_ratio=args.ratio
+                )
+                frame_count = disposition.images_count
             print(
                 f"🎬 Generate montage from video {color_str(source)} using {frame_count} thumbnails"
             )

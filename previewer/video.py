@@ -2,13 +2,15 @@
 Video related utility functions
 """
 import json
+import shlex
 import subprocess
 from dataclasses import dataclass
 from datetime import timedelta
 from os import getenv
 from pathlib import Path
 from re import fullmatch
-from typing import List
+
+from .resolution import resolution_parse
 
 _POSITION_PATTERN = r"(?P<minus>-)?((((?P<hours>[0-9]{1,2}):)?(?P<minutes>[0-6]?[0-9]):)?(?P<seconds>[0-6]?[0-9](\.[0-9]{1,3})?)|(?P<seconds_only>[0-9]+(\.[0-9]{1,3})?)|(?P<percent>(100|[0-9]{1,2}))%)"
 
@@ -37,24 +39,26 @@ class Position:
         return out
 
 
+def get_video_resolution(video: Path) -> tuple[int, int]:
+    """
+    use ffprobe to get the video resolution as tuple
+    """
+    command = [getenv("FFPROBE_BIN", "ffprobe"), "-i", str(video)] + shlex.split(
+        "-v quiet -show_entries stream=width,height -select_streams v:0 -of csv=s=x:p=0"
+    )
+    stdout = subprocess.check_output(command, encoding="utf8")
+    return resolution_parse(stdout.strip())
+
+
 def get_video_duration(video: Path) -> float:
     """
     use ffprobe to get the video duration as float
     """
-    command = [
-        getenv("FFPROBE_BIN", "ffprobe"),
-        "-i",
-        str(video),
-        "-v",
-        "quiet",
-        "-show_entries",
-        "format=duration",
-        "-hide_banner",
-        "-of",
-        "default=noprint_wrappers=1:nokey=1",
-    ]
-    stdout = subprocess.check_output(command)
-    return float(stdout)
+    command = [getenv("FFPROBE_BIN", "ffprobe"), "-i", str(video)] + shlex.split(
+        "-v quiet -show_entries format=duration -select_streams v:0 -of csv=s=x:p=0"
+    )
+    stdout = subprocess.check_output(command, encoding="utf8")
+    return float(stdout.strip())
 
 
 def get_video_metadata(video: Path) -> dict:
@@ -79,7 +83,6 @@ def extract_frame(video: Path, output: Path, seconds: float) -> Path:
     """
     if output.exists():
         raise FileExistsError(f"File already exists: {output}")
-
     command = [
         getenv("FFMPEG_BIN", "ffmpeg"),
         "-ss",
@@ -94,7 +97,7 @@ def extract_frame(video: Path, output: Path, seconds: float) -> Path:
     return output
 
 
-def get_video_description(video: Path) -> List[str]:
+def get_video_description(video: Path) -> list[str]:
     metadata = get_video_metadata(video)
     return [
         f"File: {video.name}",

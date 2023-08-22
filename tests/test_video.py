@@ -1,11 +1,21 @@
 from previewer.collectors import iter_video_frames
 from previewer.mime import get_mime
-from previewer.video import Position, get_video_duration, get_video_metadata
+from previewer.video import (
+    Position,
+    get_video_duration,
+    get_video_metadata,
+    get_video_resolution,
+)
 
 
 def test_get_video_duration(clip):
     duration = get_video_duration(clip)
     assert 3 < duration < 5
+
+
+def test_get_video_resolution(clip):
+    resolution = get_video_resolution(clip)
+    assert resolution == (1280, 720)
 
 
 def test_extract_images(clip):

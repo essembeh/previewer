@@ -214,7 +214,7 @@ requirements-deprecated-finder = ["pip-api", "pipreqs"]
 name = "lazy-object-proxy"
 version = "1.9.0"
 description = "A fast and thorough lazy object proxy."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -644,4 +644,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "253af642db79da571ab3aa53d33551662d87edbfcd0796df3069d0bd51ed48de"
+content-hash = "059ad061f1ef31a0fc5d88270f576952712ea4b8083f9eb3b64e27f074ac54f0"
