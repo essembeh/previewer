@@ -13,7 +13,7 @@ classifiers = [
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.10"
 colorama = "^0.4.6"
 pillow = "^10.0.0"
 puremagic = "^1.15"
