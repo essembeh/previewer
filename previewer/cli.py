@@ -325,7 +325,7 @@ def run():
                     duration, resolution=video_resolution, target_ratio=args.ratio
                 )
                 columns_count = disposition.columns
-                frame_count = disposition.images_count
+                frame_count = disposition.images
             elif columns_count is None:
                 # compute best disposition like what is done for folders
                 disposition = best_disposition_from_total(
@@ -337,7 +337,7 @@ def run():
                 disposition = best_disposition_from_columns(
                     columns_count, resolution=video_resolution, target_ratio=args.ratio
                 )
-                frame_count = disposition.images_count
+                frame_count = disposition.images
             print(
                 f"🎬 Generate montage from video {color_str(source)} using {frame_count} thumbnails"
             )
